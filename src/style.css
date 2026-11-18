@@ -1066,3 +1066,236 @@ a { color: inherit; text-decoration: none; }
   .report-chart-panel, .report-products-panel { padding: 12px; }
   .report-chart { height: 245px; }
 }
+
+@media (max-width: 620px) {
+  body { overflow-x: hidden; }
+  .dashboard-shell, .public-menu { width: 100%; overflow-x: clip; }
+  .page-content { padding-right: 14px; padding-left: 14px; }
+  .welcome-row { gap: 12px; }
+  .welcome-row > .button,
+  .report-actions .button,
+  .inventory-header-actions .button { min-height: 42px; }
+  .topbar { padding-right: 12px; padding-left: 12px; }
+  .topbar-actions { gap: 8px; }
+  .top-icon { width: 40px; height: 40px; }
+  .mobile-menu { width: 40px; height: 40px; }
+  .breadcrumb { gap: 6px; font-size: 10px; }
+  .sidebar { width: min(84vw, 300px); padding-top: max(18px, env(safe-area-inset-top)); padding-bottom: max(14px, env(safe-area-inset-bottom)); }
+  .nav-item { min-height: 44px; font-size: 12px; }
+  .nav-item > svg { width: 19px; height: 19px; }
+  .quickstep { min-height: 58px; }
+  .quickstep > span:nth-child(2) strong { font-size: 11px; }
+  .quickstep > span:nth-child(2) small { font-size: 10px; }
+  .panel-header { padding-right: 12px; padding-left: 12px; }
+  .panel-header h3 { font-size: 13px; }
+  .panel-header p { font-size: 10px; line-height: 1.45; }
+  .metric-card { min-height: 120px; }
+  .metric-label { font-size: 10px; }
+  .metric-note { font-size: 9px; line-height: 1.4; }
+  .settings-card-head { flex-wrap: wrap; }
+  .settings-card-head p { max-width: 100%; }
+  .settings-card-head > .button { min-height: 38px; }
+  .settings-form .form-field { font-size: 12px; }
+  .settings-form .form-field input { min-height: 44px; height: 44px; font-size: 16px; }
+  .settings-meta span { font-size: 10px; }
+  .settings-meta strong { font-size: 11px; }
+
+  .public-topbar { height: 58px; padding-right: 10px; padding-left: 10px; }
+  .public-brand { gap: 7px; }
+  .public-brand > span, .public-brand > img { width: 30px; height: 30px; }
+  .public-brand strong { max-width: min(46vw, 190px); font-size: 13px; }
+  .public-table-pill { min-height: 34px; padding: 0 8px; font-size: 9px; }
+  .public-cart-top { min-width: 42px; min-height: 42px; justify-content: center; padding: 0 9px; }
+  .public-layout { padding-right: 10px; padding-left: 10px; }
+  .public-hero { min-height: 180px; padding: 17px 15px; }
+  .public-hero h1 { max-width: calc(100% - 55px); font-size: clamp(23px, 7vw, 28px); }
+  .public-hero p { max-width: 75%; font-size: 10px; line-height: 1.5; }
+  .public-hero-stamp { right: 10px; width: 54px; height: 54px; }
+  .public-hero-stamp span { font-size: 6px; }
+  .public-heading-row h2 { font-size: 21px; }
+  .public-heading-row > div > p:last-child { font-size: 10px; line-height: 1.5; }
+  .public-search { height: 42px; }
+  .public-search input { font-size: 16px; }
+  .category-tab { min-height: 40px; padding: 0 13px; font-size: 11px; }
+  .public-category-heading h3 { font-size: 15px; }
+  .public-category-heading > span { font-size: 10px; }
+  .public-product-image { height: clamp(110px, 34vw, 160px); }
+  .public-product-info { padding: 10px; }
+  .public-product-name h4 { font-size: 11px; line-height: 1.4; }
+  .public-product-name > strong { font-size: 10px; }
+  .public-product-info > p { min-height: 30px; font-size: 9px; line-height: 1.5; }
+  .variant-select { font-size: 10px; }
+  .variant-select-control select { min-height: 38px; max-width: 100%; font-size: 12px; }
+  .add-product-button { min-height: 42px; font-size: 11px; }
+  .public-cart { padding-bottom: env(safe-area-inset-bottom); }
+  .public-cart-head h2 { font-size: 18px; }
+  .cart-line-copy strong { font-size: 11px; }
+  .cart-line-copy > span, .cart-line-copy small { font-size: 10px; }
+  .cart-line-copy > .cart-line-customizations { font-size: 9px; }
+  .quantity-control { min-height: 38px; gap: 9px; }
+  .quantity-control button { width: 28px; height: 34px; }
+  .quantity-control span { font-size: 11px; }
+  .cart-subtotal, .cart-estimated-total { font-size: 11px; }
+  .cart-subtotal strong, .cart-estimated-total strong { font-size: 11px; }
+  .cart-bottom > small { font-size: 9px; }
+  .cart-bottom .button { min-height: 46px; font-size: 11px; }
+  .mobile-cart-button { min-height: 54px; bottom: max(12px, env(safe-area-inset-bottom)); font-size: 12px; }
+  .mobile-cart-button > strong { font-size: 12px; }
+  .checkout-overlay { padding: 8px; }
+  .checkout-modal { max-height: calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); padding: 17px; }
+  .checkout-form .form-field { font-size: 12px; }
+  .checkout-form .form-field input { height: 46px; font-size: 16px; }
+  .checkout-form .form-field textarea { min-height: 84px; font-size: 16px; }
+  .checkout-form .button { min-height: 48px; }
+  .checkout-notice, .checkout-safe { font-size: 10px; line-height: 1.5; }
+  .order-confirmation-card { padding: 24px 17px; }
+  .order-confirmation-card h1 { font-size: 22px; }
+  .confirmation-copy, .confirmation-note { font-size: 10px; }
+  .order-confirmation-card .button { min-height: 46px; }
+
+  .order-filter, .billing-filter, .inventory-tab { min-height: 40px; padding-right: 10px; padding-left: 10px; font-size: 10px; }
+  .order-card-customer strong, .order-card-items strong { font-size: 11px; }
+  .order-card-customer span, .order-card-items span, .order-card-total span { font-size: 9px; }
+  .order-card-actions .button { min-height: 40px; font-size: 10px; }
+  .kitchen-ticket { padding: 12px; }
+  .kitchen-ticket li > div { font-size: 10px; }
+  .kitchen-ticket li > small, .kitchen-customer-note { font-size: 9px; }
+  .kitchen-action { min-height: 42px; }
+  .notification-copy > strong { font-size: 11px; }
+  .notification-copy p { font-size: 10px; }
+  .notification-copy time { font-size: 9px; }
+  .notification-read-button { width: 38px; height: 38px; }
+  .billing-metric > span:nth-child(2), .billing-section-heading p { font-size: 10px; }
+  .billing-metric > strong { font-size: 15px; }
+  .billable-order > span:first-child, .billable-order > strong { font-size: 10px; }
+  .billable-order > span:nth-child(2) { font-size: 9px; }
+  .billable-create { min-height: 42px; font-size: 10px; }
+  .invoice-main > strong { font-size: 11px; }
+  .invoice-main > span, .invoice-main > small { font-size: 9px; }
+  .invoice-actions .button { min-height: 40px; font-size: 10px; }
+  .payment-dialog .form-field { font-size: 12px; }
+  .payment-dialog .form-field input, .payment-dialog .form-field select { min-height: 46px; height: 46px; font-size: 16px; }
+  .payment-dialog-actions .button, .bill-detail-actions .button { min-height: 44px; font-size: 10px; }
+
+  .inventory-enable-card strong, .inventory-policy-bar { font-size: 10px; }
+  .inventory-enable-card small, .inventory-settings-error { font-size: 9px; }
+  .inventory-panel-heading h2 { font-size: 13px; }
+  .inventory-panel-heading p, .inventory-table th, .inventory-table td { font-size: 10px; }
+  .inventory-table td > strong { font-size: 11px; }
+  .inventory-table td > small { font-size: 9px; }
+  .inventory-row-actions .button { min-height: 36px; font-size: 9px; }
+  .recipe-product-info > strong, .supplier-copy > strong { font-size: 11px; }
+  .recipe-product-info > span, .supplier-copy > span, .recipe-hint { font-size: 9px; }
+  .recipe-row .button { min-height: 38px; font-size: 9px; }
+  .movement-copy > strong { font-size: 10px; }
+  .movement-copy > span, .movement-row > time { font-size: 9px; }
+  .inventory-form .form-field { font-size: 11px; }
+  .inventory-form .form-field input, .inventory-form .form-field select { min-height: 44px; height: 44px; font-size: 16px; }
+  .inventory-form .form-field textarea { font-size: 16px; }
+  .recipe-editor-row select, .recipe-editor-row input { min-height: 42px; height: 42px; font-size: 14px; }
+  .inventory-modal-actions .button { min-height: 43px; font-size: 10px; }
+
+  .report-range { min-height: 42px; }
+  .report-range select { min-height: 40px; font-size: 12px; }
+  .report-metric-label { font-size: 10px; }
+  .report-metric > small { font-size: 9px; }
+  .report-panel-heading h2 { font-size: 15px; }
+  .report-panel-heading p { font-size: 10px; }
+  .report-product-copy strong { font-size: 11px; }
+  .report-product-copy span, .report-footnote { font-size: 10px; }
+}
+
+@media (max-width: 380px) {
+  .page-content { padding-right: 11px; padding-left: 11px; }
+  .public-layout { padding-right: 8px; padding-left: 8px; }
+  .public-product-grid { gap: 6px; }
+  .public-product-info { padding: 8px; }
+  .public-product-name { gap: 4px; }
+  .public-product-name h4 { font-size: 10px; }
+  .public-product-name > strong { font-size: 9px; }
+  .report-metrics { gap: 7px; }
+  .report-metric { grid-template-columns: 26px minmax(0, 1fr); gap: 4px 7px; padding: 9px; }
+  .report-metric-icon { width: 26px; height: 26px; }
+  .report-metric > strong { font-size: 13px; }
+  .table-qr-grid { grid-template-columns: 1fr; }
+  .table-qr-card { padding: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
+.super-admin-page { min-height: 100vh; color: #23332a; background: #f5f7f4; }
+.super-admin-topbar { min-height: 66px; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 10px max(24px, calc((100vw - 1300px) / 2)); border-bottom: 1px solid #e6ebe6; background: #fff; }
+.super-admin-brand { display: flex; align-items: center; gap: 9px; }
+.super-admin-brand > span { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; color: #fff; background: #43885a; }
+.super-admin-brand > strong { color: #304337; font: 700 16px 'Manrope', sans-serif; }
+.super-admin-brand > small { margin-left: 4px; padding-left: 12px; border-left: 1px solid #e5eae5; color: #879289; font-size: 11px; }
+.super-admin-account { display: flex; align-items: center; gap: 12px; }
+.super-admin-account > span { max-width: 260px; overflow: hidden; color: #78847b; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.super-admin-account .button { min-height: 38px; font-size: 10px; }
+.super-admin-content { width: min(100%, 1348px); margin: 0 auto; padding: 30px 24px 45px; }
+.super-admin-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
+.super-admin-heading h1 { margin: 0; color: #1d2e23; font: 700 26px/1.2 'Manrope', sans-serif; letter-spacing: -.8px; }
+.super-admin-heading p:last-child { max-width: 600px; margin: 7px 0 0; color: #849087; font-size: 11px; line-height: 1.6; }
+.super-admin-live { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 8px 10px; border: 1px solid #e3ebe3; border-radius: 20px; color: #66816b; background: #fff; font: inherit; font-size: 10px; white-space: nowrap; }
+.super-admin-live:disabled { opacity: .7; cursor: wait; }
+.super-admin-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+.super-admin-metric { display: flex; flex-direction: column; gap: 9px; padding: 15px; }
+.super-admin-metric > span { color: #879289; font-size: 10px; }
+.super-admin-metric > strong { color: #304337; font: 700 23px/1 'Manrope', sans-serif; }
+.super-admin-shops { overflow: hidden; }
+.super-admin-list-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 15px; border-bottom: 1px solid #edf0ed; }
+.super-admin-list-heading h2 { margin: 0; color: #3a4b3f; font: 700 14px 'Manrope', sans-serif; }
+.super-admin-list-heading p { margin: 4px 0 0; color: #97a098; font-size: 9px; }
+.super-admin-search { width: min(270px, 45%); height: 38px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid #e4e9e4; border-radius: 7px; color: #8d998f; background: #fff; }
+.super-admin-search input { width: 100%; min-width: 0; border: 0; outline: 0; color: #405045; background: transparent; font-size: 11px; }
+.super-admin-table-wrap { overflow-x: auto; }
+.super-admin-table { width: 100%; border-collapse: collapse; text-align: left; }
+.super-admin-table th { padding: 11px 12px; color: #98a198; background: #fbfcfb; font-size: 9px; font-weight: 600; white-space: nowrap; }
+.super-admin-table td { padding: 12px; border-top: 1px solid #eff2ef; color: #68756b; font-size: 10px; white-space: nowrap; }
+.super-admin-shop-name { min-width: 180px; display: flex; align-items: center; gap: 9px; }
+.super-admin-shop-name > span { width: 31px; height: 31px; display: grid; flex: 0 0 auto; place-items: center; border-radius: 8px; color: #598961; background: #eef6ed; }
+.super-admin-shop-name > div { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.super-admin-shop-name strong { max-width: 240px; overflow: hidden; color: #425147; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.super-admin-shop-name small { color: #98a198; font-size: 8px; }
+.super-admin-status { display: inline-flex; padding: 4px 8px; border-radius: 12px; font-size: 9px; font-weight: 600; }
+.super-admin-status-active { color: #4a8054; background: #edf6ec; }
+.super-admin-status-inactive { color: #96734a; background: #f8f2e7; }
+.super-admin-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 15px; border-top: 1px solid #edf0ed; color: #8b968d; font-size: 9px; }
+.super-admin-pagination > div { display: flex; gap: 7px; }
+.super-admin-pagination .button { min-height: 34px; font-size: 9px; }
+.super-admin-pagination .button:disabled { cursor: not-allowed; }
+.super-admin-state { min-height: 150px; display: grid; place-items: center; padding: 20px; color: #849087; font-size: 11px; text-align: center; }
+.super-admin-error { color: #a2544f; }
+.super-admin-footer { display: flex; justify-content: space-between; gap: 12px; padding: 16px max(24px, calc((100vw - 1300px) / 2)); border-top: 1px solid #e6ebe6; color: #8e9990; background: #fff; font-size: 9px; }
+.super-admin-footer a { display: inline-flex; align-items: center; gap: 5px; color: #4c8056; font-weight: 600; }
+
+@media (max-width: 720px) {
+  .super-admin-content { padding: 22px 14px 32px; }
+  .super-admin-topbar { min-height: 58px; padding: 8px 13px; }
+  .super-admin-account { gap: 7px; }
+  .super-admin-account > span { max-width: 120px; font-size: 9px; }
+  .super-admin-account .button { min-height: 40px; padding: 0 9px; }
+  .super-admin-heading { align-items: flex-start; flex-direction: column; gap: 11px; }
+  .super-admin-heading h1 { font-size: 22px; }
+  .super-admin-heading p:last-child { font-size: 10px; }
+  .super-admin-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .super-admin-metric { padding: 12px; }
+  .super-admin-metric > strong { font-size: 20px; }
+  .super-admin-list-heading { align-items: stretch; flex-direction: column; padding: 12px; }
+  .super-admin-search { width: 100%; height: 42px; }
+  .super-admin-search input { font-size: 16px; }
+  .super-admin-table { min-width: 760px; }
+  .super-admin-table th, .super-admin-table td { padding: 12px 10px; font-size: 10px; }
+  .super-admin-pagination { padding: 11px; }
+  .super-admin-pagination .button { min-height: 40px; }
+  .super-admin-footer { padding: 13px 14px; }
+}
+
+@media (max-width: 380px) {
+  .super-admin-brand > small { padding-left: 7px; font-size: 9px; }
+  .super-admin-brand { gap: 6px; }
+  .super-admin-account > span { max-width: 86px; }
+  .super-admin-account .button { gap: 5px; padding: 0 7px; font-size: 9px; }
+}

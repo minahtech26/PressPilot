@@ -49,6 +49,7 @@ const NotificationsPage = lazy(() => import('./components/NotificationsPage').th
 const BillingManagement = lazy(() => import('./components/BillingManagement').then((module) => ({ default: module.BillingManagement })))
 const InventoryManagement = lazy(() => import('./components/InventoryManagement').then((module) => ({ default: module.InventoryManagement })))
 const ReportingManagement = lazy(() => import('./components/ReportingManagement').then((module) => ({ default: module.ReportingManagement })))
+const SuperAdminDashboard = lazy(() => import('./components/SuperAdminDashboard').then((module) => ({ default: module.SuperAdminDashboard })))
 
 const signInSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -79,6 +80,7 @@ const navigation = [
   { label: 'Billing', path: '/dashboard/billing', icon: CreditCard },
   { label: 'Inventory', path: '/dashboard/inventory', icon: Box },
   { label: 'Reports', path: '/dashboard/reports', icon: FileText },
+  { label: 'Platform admin', path: '/admin', icon: ShieldCheck },
 ]
 
 function getErrorMessage(error: unknown) {
@@ -125,6 +127,19 @@ function App() {
       })
     },
   })
+  const superAdminQuery = useQuery({
+    queryKey: ['super-admin-role', user?.id],
+    enabled: Boolean(user && supabase),
+    queryFn: async () => {
+      const { data, error } = await supabase!
+        .from('profiles')
+        .select('is_super_admin')
+        .eq('id', user!.id)
+        .single()
+      if (error) throw error
+      return data.is_super_admin === true
+    },
+  })
 
   if (!isSupabaseConfigured) return <SetupPage />
   if (authLoading) return <LoadingPage />
@@ -133,6 +148,18 @@ function App() {
     <Routes>
       <Route path="/menu/:shopSlug/order/:orderId" element={<Suspense fallback={<LoadingPage />}><PublicOrderConfirmation /></Suspense>} />
       <Route path="/menu/:shopSlug" element={<Suspense fallback={<LoadingPage />}><PublicMenu /></Suspense>} />
+      <Route
+        path="/admin/*"
+        element={user
+          ? superAdminQuery.isLoading
+            ? <LoadingPage />
+            : superAdminQuery.isError
+              ? <main className="setup-page"><section className="setup-card"><ShieldCheck size={26} /><h1>Admin access could not be checked</h1><p className="muted">Reload the page or contact your database administrator.</p><Link className="text-link" to="/dashboard">Return to workspace <ArrowRight size={15} /></Link></section></main>
+              : superAdminQuery.data
+                ? <Suspense fallback={<LoadingPage />}><SuperAdminDashboard user={user} /></Suspense>
+                : <Navigate to="/dashboard" replace />
+          : <Navigate to="/login" replace />}
+      />
       <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <AuthPage mode="login" />} />
       <Route path="/register" element={user ? <Navigate to="/dashboard" replace /> : <AuthPage mode="register" />} />
       <Route path="/forgot-password" element={user ? <Navigate to="/dashboard" replace /> : <ForgotPasswordPage />} />
@@ -147,8 +174,12 @@ function App() {
             ? shopsLoading
               ? <LoadingPage />
               : shops?.length
-                ? <Dashboard user={user} shop={shops[0].shop} role={shops[0].role} />
-                : <Navigate to="/onboarding" replace />
+                ? <Dashboard user={user} shop={shops[0].shop} role={shops[0].role} isSuperAdmin={superAdminQuery.data === true} />
+                : superAdminQuery.isLoading
+                  ? <LoadingPage />
+                  : superAdminQuery.data
+                    ? <Navigate to="/admin" replace />
+                    : <Navigate to="/onboarding" replace />
             : <Navigate to="/login" replace />
         }
       />
@@ -319,7 +350,7 @@ function OnboardingPage({ user }: { user: User }) {
   )
 }
 
-function Dashboard({ user, shop, role }: { user: User; shop: Shop; role: ShopRole }) {
+function Dashboard({ user, shop, role, isSuperAdmin }: { user: User; shop: Shop; role: ShopRole; isSuperAdmin: boolean }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
@@ -396,7 +427,7 @@ function Dashboard({ user, shop, role }: { user: User; shop: Shop; role: ShopRol
         <div className="workspace-switcher"><div className="shop-avatar"><Store size={16} /></div><div className="workspace-copy"><strong>{shop.name}</strong><span>Shop workspace</span></div><ChevronDown size={16} /></div>
         <div className="nav-heading">WORKSPACE</div>
         <nav className="side-nav">
-          {navigation.filter((item) => (item.label !== 'Billing' || role !== 'kitchen') && (item.label !== 'Inventory' || canManageShop) && (item.label !== 'Reports' || canManageShop)).map(({ label, path, icon: Icon }) => {
+          {navigation.filter((item) => (item.label !== 'Billing' || role !== 'kitchen') && (item.label !== 'Inventory' || canManageShop) && (item.label !== 'Reports' || canManageShop) && (item.label !== 'Platform admin' || isSuperAdmin)).map(({ label, path, icon: Icon }) => {
             const active = path === '/dashboard' ? activeSection === 'overview' : path.endsWith(`/${activeSection}`)
             return <Link key={label} to={path} className={`nav-item ${active ? 'nav-active' : ''}`} onClick={() => setMobileNavOpen(false)}><Icon size={18} /><span>{label}</span>{active && <span className="nav-indicator" />}</Link>
           })}
