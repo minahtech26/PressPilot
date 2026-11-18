@@ -100,7 +100,8 @@ export function TableManagement({ shop }: { shop: Shop }) {
   const activeTables = (tablesQuery.data ?? []).filter((table) => table.is_active)
 
   function menuUrl(table: DiningTable) {
-    return `${window.location.origin}/menu/${encodeURIComponent(shop.slug)}?table=${encodeURIComponent(table.id)}`
+    const appUrl = import.meta.env.VITE_APP_URL?.trim().replace(/\/+$/, '') || window.location.origin
+    return `${appUrl}/menu/${encodeURIComponent(shop.slug)}?table=${encodeURIComponent(table.id)}`
   }
 
   function downloadQr(table: DiningTable) {

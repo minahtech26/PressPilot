@@ -48,6 +48,7 @@ const KitchenDashboard = lazy(() => import('./components/KitchenDashboard').then
 const NotificationsPage = lazy(() => import('./components/NotificationsPage').then((module) => ({ default: module.NotificationsPage })))
 const BillingManagement = lazy(() => import('./components/BillingManagement').then((module) => ({ default: module.BillingManagement })))
 const InventoryManagement = lazy(() => import('./components/InventoryManagement').then((module) => ({ default: module.InventoryManagement })))
+const ReportingManagement = lazy(() => import('./components/ReportingManagement').then((module) => ({ default: module.ReportingManagement })))
 
 const signInSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -77,6 +78,7 @@ const navigation = [
   { label: 'Menu', path: '/dashboard/menu', icon: BookOpen },
   { label: 'Billing', path: '/dashboard/billing', icon: CreditCard },
   { label: 'Inventory', path: '/dashboard/inventory', icon: Box },
+  { label: 'Reports', path: '/dashboard/reports', icon: FileText },
 ]
 
 function getErrorMessage(error: unknown) {
@@ -348,6 +350,7 @@ function Dashboard({ user, shop, role }: { user: User; shop: Shop; role: ShopRol
     notifications: 'Notifications',
     billing: 'Billing',
     inventory: 'Inventory',
+    reports: 'Reports',
     menu: 'Menu & products',
     tables: 'Tables & QR',
     settings: 'Shop settings',
@@ -393,7 +396,7 @@ function Dashboard({ user, shop, role }: { user: User; shop: Shop; role: ShopRol
         <div className="workspace-switcher"><div className="shop-avatar"><Store size={16} /></div><div className="workspace-copy"><strong>{shop.name}</strong><span>Shop workspace</span></div><ChevronDown size={16} /></div>
         <div className="nav-heading">WORKSPACE</div>
         <nav className="side-nav">
-          {navigation.filter((item) => (item.label !== 'Billing' || role !== 'kitchen') && (item.label !== 'Inventory' || canManageShop)).map(({ label, path, icon: Icon }) => {
+          {navigation.filter((item) => (item.label !== 'Billing' || role !== 'kitchen') && (item.label !== 'Inventory' || canManageShop) && (item.label !== 'Reports' || canManageShop)).map(({ label, path, icon: Icon }) => {
             const active = path === '/dashboard' ? activeSection === 'overview' : path.endsWith(`/${activeSection}`)
             return <Link key={label} to={path} className={`nav-item ${active ? 'nav-active' : ''}`} onClick={() => setMobileNavOpen(false)}><Icon size={18} /><span>{label}</span>{active && <span className="nav-indicator" />}</Link>
           })}
@@ -430,6 +433,10 @@ function Dashboard({ user, shop, role }: { user: User; shop: Shop; role: ShopRol
                           ? canManageShop
                             ? <Suspense fallback={<LoadingPage />}><InventoryManagement shop={shop} role={role} /></Suspense>
                             : <section className="page-content"><PageHeading eyebrow="INVENTORY" title="Access restricted" description="Inventory management is available to shop owners and managers." /></section>
+                          : activeSection === 'reports'
+                            ? canManageShop
+                              ? <Suspense fallback={<LoadingPage />}><ReportingManagement shop={shop} /></Suspense>
+                              : <section className="page-content"><PageHeading eyebrow="REPORTS" title="Access restricted" description="Reports are available to shop owners and managers." /></section>
               : <OverviewPage
                   shop={shop}
                   name={name}
