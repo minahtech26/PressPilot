@@ -151,7 +151,7 @@ export function SuperAdminDashboard({ user }: { user: User }) {
   return (
     <m.main className="super-admin-page" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }}>
       <header className="super-admin-topbar">
-        <a className="super-admin-brand" href="/admin"><span><BrandMark /></span><strong>Freshdesk</strong><small>Platform admin</small></a>
+        <a className="super-admin-brand" href="/admin"><span><BrandMark /></span><strong>PressPilot</strong><small>Platform admin</small></a>
         <div className="super-admin-account"><span title={user.email ?? undefined}>{user.email}</span><button className="button button-secondary" onClick={signOut}><LogOut size={15} /> Sign out</button></div>
       </header>
       <section className="super-admin-content">

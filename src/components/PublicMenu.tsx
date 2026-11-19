@@ -100,12 +100,13 @@ function money(amount: number, currency: string) {
 }
 
 function getCartKey(slug: string, tableId: string | null) {
-  return `freshdesk-cart:${slug}:${tableId ?? 'counter'}`
+  return `presspilot-cart:${slug}:${tableId ?? 'counter'}`
 }
 
 function loadSavedCart(key: string): CartEntry[] {
   try {
-    const stored = localStorage.getItem(key)
+    const previousKey = key.replace(/^presspilot-cart:/, 'freshdesk-cart:')
+    const stored = localStorage.getItem(key) ?? localStorage.getItem(previousKey)
     if (!stored) return []
     const result = savedCartSchema.safeParse(JSON.parse(stored))
     return result.success ? result.data : []
@@ -319,6 +320,11 @@ export function PublicMenu() {
           ) : <div className="cart-empty"><div><ShoppingBasket size={23} /></div><strong>Your cart is waiting</strong><span>Pick something fresh from the menu.</span><button className="quiet-link" onClick={() => setCartOpen(false)}>Explore the menu <ArrowRight size={14} /></button></div>}
         </aside>
       </div>
+      <footer className="public-site-footer">
+        <span>{menu.shop.name} · Freshly made for you</span>
+        <span className="developer-credit"><span>Developed by <strong>Minah Tech</strong></span><img src="/minah%20tech%20web%20logo.png?v=1" alt="Minah Tech logo" /></span>
+        <span className="public-legal-links"><Link to="/privacy">Privacy</Link><Link to="/terms">Terms</Link></span>
+      </footer>
       {cartCount > 0 && <button className="mobile-cart-button" onClick={() => setCartOpen(true)}><ShoppingBag size={17} /><span>Your order · {cartCount} {cartCount === 1 ? 'item' : 'items'}</span><strong>{money(estimatedTotal, menu.shop.currency)}</strong><ArrowRight size={16} /></button>}
       {cartOpen && <button className="cart-backdrop" onClick={() => { setCartOpen(false); setCheckoutOpen(false) }} aria-label="Close cart" />}
       {checkoutOpen && <div className="checkout-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setCheckoutOpen(false) }}>
@@ -333,6 +339,7 @@ export function PublicMenu() {
             <div className="checkout-total"><span>Total due at checkout</span><strong>{money(estimatedTotal, menu.shop.currency)}</strong></div>
             <button type="submit" className="button button-primary button-wide" disabled={placeOrder.isPending}>{placeOrder.isPending ? 'Sending your order…' : 'Place order'} <ArrowRight size={16} /></button>
             <small className="checkout-safe"><Check size={13} /> Your order total is verified securely by the shop.</small>
+            <small className="checkout-privacy">By placing your order, you agree to our <Link to="/terms" target="_blank" rel="noreferrer">terms</Link> and <Link to="/privacy" target="_blank" rel="noreferrer">privacy policy</Link>.</small>
           </form>
         </section>
       </div>}

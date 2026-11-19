@@ -54,6 +54,8 @@ const BillingManagement = lazy(() => import('./components/BillingManagement').th
 const InventoryManagement = lazy(() => import('./components/InventoryManagement').then((module) => ({ default: module.InventoryManagement })))
 const ReportingManagement = lazy(() => import('./components/ReportingManagement').then((module) => ({ default: module.ReportingManagement })))
 const SuperAdminDashboard = lazy(() => import('./components/SuperAdminDashboard').then((module) => ({ default: module.SuperAdminDashboard })))
+const PrivacyPolicyPage = lazy(() => import('./components/PrivacyPolicyPage').then((module) => ({ default: module.PrivacyPolicyPage })))
+const TermsAndConditionsPage = lazy(() => import('./components/TermsAndConditionsPage').then((module) => ({ default: module.TermsAndConditionsPage })))
 
 const signInSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -152,6 +154,10 @@ function App() {
     <Routes>
       <Route path="/menu/:shopSlug/order/:orderId" element={<Suspense fallback={<LoadingPage />}><PublicOrderConfirmation /></Suspense>} />
       <Route path="/menu/:shopSlug" element={<Suspense fallback={<LoadingPage />}><PublicMenu /></Suspense>} />
+      <Route path="/privacy" element={<Suspense fallback={<LoadingPage />}><PrivacyPolicyPage /></Suspense>} />
+      <Route path="/privacy-policy" element={<Navigate to="/privacy" replace />} />
+      <Route path="/terms" element={<Suspense fallback={<LoadingPage />}><TermsAndConditionsPage /></Suspense>} />
+      <Route path="/terms-and-conditions" element={<Navigate to="/terms" replace />} />
       <Route
         path="/admin/*"
         element={user
@@ -196,8 +202,8 @@ function SetupPage() {
   return (
     <m.main className="setup-page" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }}>
       <div className="setup-card">
-        <div className="brand-mark"><BrandMark /></div>
-        <p className="eyebrow">Freshdesk setup</p>
+        <div className="setup-brand"><div className="brand-mark"><BrandMark /></div><strong>PressPilot</strong></div>
+        <p className="eyebrow">PressPilot setup</p>
         <h1>Connect your shop workspace</h1>
         <p className="muted">Add your Supabase project credentials to start setting up your shop securely.</p>
         <div className="setup-steps">
@@ -252,14 +258,14 @@ function AuthPage({ mode }: { mode: 'login' | 'register' }) {
   return (
     <m.main className="auth-page" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }}>
       <section className="auth-story">
-        <Link to="/login" className="brand"><span className="brand-mark"><BrandMark /></span>freshdesk</Link>
+        <Link to="/login" className="brand"><span className="brand-mark"><BrandMark /></span></Link>
         <div className="story-copy">
           <div className="story-pill"><span className="live-dot" /> BUILT FOR THE DAILY RUSH</div>
           <h1>Good things,<br /><em>made simple.</em></h1>
           <p>One calm place to run your juice bar — from the first order to the last sip.</p>
           <div className="story-stats"><div><strong>01</strong><span>Set up your shop</span></div><div><strong>02</strong><span>Bring your team in</span></div><div><strong>03</strong><span>Serve something fresh</span></div></div>
         </div>
-        <div className="story-footer"><span>Made for independent shops</span><span>© 2026 Freshdesk</span></div>
+        <div className="story-footer"><span>Made for independent shops</span><span>© 2026 PressPilot</span></div>
         <div className="story-orb orb-one" /><div className="story-orb orb-two" />
       </section>
       <section className="auth-panel">
@@ -267,7 +273,7 @@ function AuthPage({ mode }: { mode: 'login' | 'register' }) {
         <div className="auth-form-wrap">
           <div className="mini-icon"><Store size={20} /></div>
           <p className="eyebrow">{isRegister ? 'A FRESH START' : 'WELCOME BACK'}</p>
-          <h2>{isRegister ? 'Create your account' : 'Sign in to Freshdesk'}</h2>
+          <h2>{isRegister ? 'Create your account' : 'Sign in to PressPilot'}</h2>
           <p className="muted">{isRegister ? 'Start with your account. You’ll add your shop next.' : 'Your shop is ready when you are.'}</p>
           {message && <div className="notice-success"><Check size={17} />{message}</div>}
           <form onSubmit={form.handleSubmit((values) => mutation.mutate(values))} className="form-stack">
@@ -277,9 +283,10 @@ function AuthPage({ mode }: { mode: 'login' | 'register' }) {
             {!isRegister && <div className="form-meta"><span><ShieldCheck size={14} /> Secure sign-in</span><Link to="/forgot-password">Forgot password?</Link></div>}
             <button type="submit" className="button button-primary button-wide" disabled={mutation.isPending}>{mutation.isPending ? 'Please wait…' : isRegister ? 'Create account' : 'Sign in'} <ArrowRight size={16} /></button>
           </form>
-          <p className="auth-switch">{isRegister ? 'Already have an account?' : 'New to Freshdesk?'} <Link to={isRegister ? '/login' : '/register'}>{isRegister ? 'Sign in' : 'Create an account'}</Link></p>
-          <p className="auth-privacy"><LockKeyhole size={13} /> Your shop data is protected and only visible to your team.</p>
+          <p className="auth-switch">{isRegister ? 'Already have an account?' : 'New to PressPilot?'} <Link to={isRegister ? '/login' : '/register'}>{isRegister ? 'Sign in' : 'Create an account'}</Link></p>
+          <p className="auth-privacy"><LockKeyhole size={13} /> Your shop data is protected and only visible to your team. <Link to="/privacy">Privacy</Link><span>·</span><Link to="/terms">Terms</Link></p>
         </div>
+        <footer className="developer-credit auth-developer-credit"><span>Developed by <strong>Minah Tech</strong></span><img src="/minah%20tech%20web%20logo.png?v=1" alt="Minah Tech logo" /></footer>
       </section>
     </m.main>
   )
@@ -298,8 +305,8 @@ function ForgotPasswordPage() {
   })
   return (
     <m.main className="auth-page" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }}>
-      <section className="auth-story"><Link to="/login" className="brand"><span className="brand-mark"><BrandMark /></span>freshdesk</Link><div className="story-copy"><div className="story-pill"><span className="live-dot" /> YOU’RE IN GOOD HANDS</div><h1>A little reset,<br /><em>then you’re back.</em></h1><p>We’ll send a secure link to the email address on your account.</p></div><div className="story-footer"><span>Made for independent shops</span><span>© 2026 Freshdesk</span></div></section>
-      <section className="auth-panel"><div className="auth-topline"><span>ACCOUNT RECOVERY</span><Link to="/login">Back to sign in <ArrowRight size={15} /></Link></div><div className="auth-form-wrap"><div className="mini-icon"><Mail size={20} /></div><p className="eyebrow">PASSWORD RESET</p><h2>Forgot your password?</h2><p className="muted">Enter the email you use for Freshdesk.</p><form className="form-stack recovery-form" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}><FormField label="Email address" error={form.formState.errors.email?.message}><div className="input-icon"><Mail size={17} /><input type="email" placeholder="you@yourshop.com" {...form.register('email')} /></div></FormField><button className="button button-primary button-wide" disabled={mutation.isPending}>{mutation.isPending ? 'Sending…' : 'Send reset link'} <ArrowRight size={16} /></button></form></div></section>
+      <section className="auth-story"><Link to="/login" className="brand"><span className="brand-mark"><BrandMark /></span></Link><div className="story-copy"><div className="story-pill"><span className="live-dot" /> YOU’RE IN GOOD HANDS</div><h1>A little reset,<br /><em>then you’re back.</em></h1><p>We’ll send a secure link to the email address on your account.</p></div><div className="story-footer"><span>Made for independent shops</span><span>© 2026 PressPilot</span></div></section>
+      <section className="auth-panel"><div className="auth-topline"><span>ACCOUNT RECOVERY</span><Link to="/login">Back to sign in <ArrowRight size={15} /></Link></div><div className="auth-form-wrap"><div className="mini-icon"><Mail size={20} /></div><p className="eyebrow">PASSWORD RESET</p><h2>Forgot your password?</h2><p className="muted">Enter the email you use for PressPilot.</p><form className="form-stack recovery-form" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}><FormField label="Email address" error={form.formState.errors.email?.message}><div className="input-icon"><Mail size={17} /><input type="email" placeholder="you@yourshop.com" {...form.register('email')} /></div></FormField><button className="button button-primary button-wide" disabled={mutation.isPending}>{mutation.isPending ? 'Sending…' : 'Send reset link'} <ArrowRight size={16} /></button></form></div></section>
     </m.main>
   )
 }
@@ -332,7 +339,7 @@ function OnboardingPage({ user }: { user: User }) {
   })
   return (
     <m.main className="onboarding-page" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }}>
-      <Link to="/login" className="brand"><span className="brand-mark"><BrandMark /></span>freshdesk</Link>
+      <Link to="/login" className="brand"><span className="brand-mark"><BrandMark /></span><strong className="brand-name">PressPilot</strong></Link>
       <div className="onboarding-card">
         <div className="step-count">STEP <strong>01</strong> <span>OF 01</span></div>
         <div className="mini-icon"><Store size={20} /></div>
@@ -472,7 +479,7 @@ function Dashboard({ user, shop, role, isSuperAdmin }: { user: User; shop: Shop;
     <div className="dashboard-shell">
       {mobileNavOpen && <button className="mobile-backdrop" onClick={() => setMobileNavOpen(false)} aria-label="Close navigation" />}
       <aside className={`sidebar ${mobileNavOpen ? 'sidebar-open' : ''}`}>
-        <div className="sidebar-brand"><Link to="/dashboard" className="brand"><span className="brand-mark"><BrandMark /></span><span>freshdesk</span></Link><button className="icon-button mobile-close" onClick={() => setMobileNavOpen(false)} aria-label="Close menu"><X size={18} /></button></div>
+        <div className="sidebar-brand"><Link to="/dashboard" className="brand"><span className="brand-mark"><BrandMark /></span></Link><button className="icon-button mobile-close" onClick={() => setMobileNavOpen(false)} aria-label="Close menu"><X size={18} /></button></div>
         <div className="workspace-switcher"><div className="shop-avatar"><Store size={16} /></div><div className="workspace-copy"><strong>{shop.name}</strong><span>Shop workspace</span></div><ChevronDown size={16} /></div>
         <div className="nav-heading">WORKSPACE</div>
         <nav className="side-nav">

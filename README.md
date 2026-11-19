@@ -1,6 +1,6 @@
-# Freshdesk
+# PressPilot
 
-Freshdesk is a shop management platform for independent juice bars and small cafes. It brings customer ordering and daily shop operations together in one workspace, helping teams manage service from the menu to the final bill.
+PressPilot is a shop management platform for independent juice bars and small cafes. It brings customer ordering and daily shop operations together in one workspace, helping teams manage service from the menu to the final bill.
 
 ## What it does
 
@@ -12,4 +12,4 @@ Freshdesk is a shop management platform for independent juice bars and small caf
 - Provides optional ingredient inventory, recipes, purchasing, and stock tracking.
 - Offers business reports with order trends and popular products.
 
-Freshdesk is built for shop owners and their teams, with role-based access to day-to-day tools.
+PressPilot is built for shop owners and their teams, with role-based access to day-to-day tools.
