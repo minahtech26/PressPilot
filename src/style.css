@@ -1915,16 +1915,17 @@ table tbody td { border-color: var(--line); }
   .public-cart-top > span { min-width: 17px; height: 17px; }
   .public-table-pill { margin-left: auto; margin-right: 0; padding: 6px 8px; font-size: 8px; }
   .public-layout { display: block; padding: 13px 14px 94px; }
-  .public-hero { min-height: 250px; padding: 22px 20px; border-radius: 18px; }
-  .public-hero-content { width: 57%; }
-  .public-hero-label { max-width: 100%; font-size: 7px; letter-spacing: .75px; }
-  .public-hero h1 { margin: 13px 0 8px; font-size: clamp(27px, 7vw, 37px); letter-spacing: -1.5px; }
-  .public-hero p { font-size: 10px; line-height: 1.55; }
-  .public-hero-cta { min-height: 40px; gap: 7px; margin-top: 13px; padding: 0 13px; font-size: 10px; }
+  .public-hero { min-height: 0; display: flex; align-items: stretch; flex-direction: column; padding: 0 20px 20px; border-radius: 18px; }
+  .public-hero-content { width: 100%; }
+  .public-hero-label { max-width: 100%; overflow: hidden; font-size: 8px; letter-spacing: .75px; text-overflow: ellipsis; white-space: nowrap; }
+  .public-hero-label .live-dot { flex: 0 0 auto; }
+  .public-hero h1 { margin: 0 0 8px; font-size: clamp(30px, 8vw, 38px); line-height: 1.08; letter-spacing: -1.5px; }
+  .public-hero p { max-width: 38ch; font-size: 11px; line-height: 1.6; }
+  .public-hero-cta { min-height: 44px; gap: 8px; margin-top: 14px; padding: 0 15px; font-size: 10px; }
   .public-hero-phone { font-size: 9px; }
-  .public-hero-visual { top: 24px; right: 12px; bottom: 24px; width: 38%; border-radius: 15px; }
-  .public-hero-logo { top: 8px; right: 8px; width: 38px; height: 38px; }
-  .public-hero-promo { right: 7px; bottom: 7px; gap: 4px; padding: 6px 8px; font-size: 7px; }
+  .public-hero-visual { position: relative; top: auto; right: auto; bottom: auto; order: -1; width: calc(100% + 40px); height: clamp(145px, 48vw, 205px); flex: 0 0 auto; margin: 0 -20px 18px; border-radius: 17px 17px 12px 12px; }
+  .public-hero-logo { top: 10px; right: 10px; width: 44px; height: 44px; }
+  .public-hero-promo { right: 10px; bottom: 10px; gap: 5px; padding: 7px 10px; font-size: 8px; }
   .public-heading-row { align-items: flex-start; flex-direction: column; gap: 13px; margin: 25px 1px 14px; }
   .public-heading-row h2 { font-size: 24px; }
   .public-heading-row > div > p:last-child { font-size: 10px; }
@@ -1960,11 +1961,12 @@ table tbody td { border-color: var(--line); }
   .public-header-location { display: none; }
   .public-header-actions { margin-left: auto; }
   .public-layout { padding-right: 10px; padding-left: 10px; }
-  .public-hero { min-height: 225px; padding-right: 12px; padding-left: 14px; }
-  .public-hero-content { width: 60%; }
-  .public-hero h1 { font-size: 27px; }
-  .public-hero-visual { right: 9px; width: 35%; }
+  .public-hero { padding-right: 14px; padding-left: 14px; }
+  .public-hero-visual { width: calc(100% + 28px); height: clamp(140px, 45vw, 175px); margin-right: -14px; margin-left: -14px; }
+  .public-hero-label { font-size: 7px; }
+  .public-hero h1 { font-size: 30px; }
   .public-product-grid { gap: 8px; }
   .public-product-info { min-height: 188px; padding: 9px; }
   .public-product-name h4, .public-product-name > strong { font-size: 11px; }
 }
+.public-hero-content > a.public-hero-phone { display: block; width: fit-content; margin: 10px 0 0; color: var(--primary); line-height: 1.5; }
