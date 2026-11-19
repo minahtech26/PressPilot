@@ -144,7 +144,7 @@ export function ReportingManagement({ shop }: { shop: Shop }) {
                         <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#89958c', fontSize: 11 }} />
                         <YAxis axisLine={false} tickLine={false} tick={{ fill: '#89958c', fontSize: 11 }} width={65} tickFormatter={(value: number) => new Intl.NumberFormat('en-IN', { notation: 'compact' }).format(value)} />
                         <Tooltip formatter={(value) => [money(Number(value), shop.currency), 'Order value']} labelStyle={{ color: '#24352a' }} />
-                        <Bar dataKey="order_value" fill="#43885a" radius={[5, 5, 0, 0]} maxBarSize={38} />
+                        <Bar dataKey="order_value" fill="#5685f5" radius={[5, 5, 0, 0]} maxBarSize={38} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>

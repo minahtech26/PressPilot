@@ -4,6 +4,8 @@ export interface Shop {
   id: string
   name: string
   slug: string
+  logo_url?: string | null
+  cover_url?: string | null
   address: string | null
   phone: string | null
   email: string | null

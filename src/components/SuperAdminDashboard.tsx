@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { ArrowLeft, ChevronLeft, ChevronRight, LogOut, Plus, RefreshCw, Search, ShieldCheck, Store, X } from 'lucide-react'
+import { m } from 'framer-motion'
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { ArrowLeft, ChevronLeft, ChevronRight, LogOut, Plus, RefreshCw, Search, Store, X } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { BrandMark } from './BrandMark'
 import { supabase } from '../lib/supabase'
 
 interface MonitoredShop {
@@ -147,9 +149,9 @@ export function SuperAdminDashboard({ user }: { user: User }) {
   }
 
   return (
-    <main className="super-admin-page">
+    <m.main className="super-admin-page" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }}>
       <header className="super-admin-topbar">
-        <a className="super-admin-brand" href="/admin"><span><ShieldCheck size={19} /></span><strong>Freshdesk</strong><small>Platform admin</small></a>
+        <a className="super-admin-brand" href="/admin"><span><BrandMark /></span><strong>Freshdesk</strong><small>Platform admin</small></a>
         <div className="super-admin-account"><span title={user.email ?? undefined}>{user.email}</span><button className="button button-secondary" onClick={signOut}><LogOut size={15} /> Sign out</button></div>
       </header>
       <section className="super-admin-content">
@@ -192,7 +194,9 @@ export function SuperAdminDashboard({ user }: { user: User }) {
                             <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#89958c', fontSize: 11 }} />
                             <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: '#89958c', fontSize: 11 }} width={35} />
                             <Tooltip formatter={(value) => [Number(value).toLocaleString('en-IN'), 'Orders']} labelStyle={{ color: '#24352a' }} />
-                            <Bar dataKey="orders" fill="#43885a" radius={[5, 5, 0, 0]} maxBarSize={42} />
+                            <Bar dataKey="orders" radius={[5, 5, 0, 0]} maxBarSize={42}>
+                              {analytics.daily_orders.map((item, index) => <Cell key={item.day} fill={['#26765b', '#5685f5', '#9275e8', '#e9a23b'][index % 4]} />)}
+                            </Bar>
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
@@ -246,7 +250,7 @@ export function SuperAdminDashboard({ user }: { user: User }) {
           </form>
         </section>
       </div>}
-    </main>
+    </m.main>
   )
 }
 

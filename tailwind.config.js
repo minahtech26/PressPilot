@@ -4,12 +4,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: '#17261f',
-        leaf: '#43885a',
-        mist: '#f5f7f4',
+        ink: '#263d35',
+        leaf: '#174c3c',
+        secondary: '#26765b',
+        lime: '#b8e986',
+        mint: '#e8f3ec',
+        chartBlue: '#5685f5',
+        chartViolet: '#9275e8',
+        warning: '#e9a23b',
+        error: '#e36b70',
+        mist: '#f5f7f5',
       },
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        sans: ['Plus Jakarta Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
     },
   },

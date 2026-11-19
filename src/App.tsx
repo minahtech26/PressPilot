@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { m } from 'framer-motion'
 import type { Session, User } from '@supabase/supabase-js'
 import {
   ArrowRight,
@@ -23,6 +24,7 @@ import {
   Flame,
   LayoutDashboard,
   Leaf,
+  ImagePlus,
   LockKeyhole,
   Mail,
   Menu,
@@ -31,10 +33,12 @@ import {
   ShoppingBasket,
   Store,
   Table2,
+  Upload,
   Users,
   X,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { BrandMark } from './components/BrandMark'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import type { Shop, ShopRole } from './lib/types'
 import { useLiveNotifications } from './lib/useLiveNotifications'
@@ -118,7 +122,7 @@ function App() {
     queryFn: async () => {
       const { data, error } = await supabase!
         .from('shop_members')
-        .select('shop:shops(id,name,slug,address,phone,email,gstin,currency,created_at),role')
+        .select('shop:shops(id,name,slug,logo_url,cover_url,address,phone,email,gstin,currency,created_at),role')
         .order('created_at', { ascending: true })
       if (error) throw error
       return (data ?? []).flatMap((membership) => {
@@ -190,9 +194,9 @@ function App() {
 
 function SetupPage() {
   return (
-    <main className="setup-page">
+    <m.main className="setup-page" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }}>
       <div className="setup-card">
-        <div className="brand-mark"><Leaf size={22} /></div>
+        <div className="brand-mark"><BrandMark /></div>
         <p className="eyebrow">Freshdesk setup</p>
         <h1>Connect your shop workspace</h1>
         <p className="muted">Add your Supabase project credentials to start setting up your shop securely.</p>
@@ -203,7 +207,7 @@ function SetupPage() {
         </div>
         <a className="text-link" href="https://supabase.com/dashboard" target="_blank" rel="noreferrer">Open Supabase dashboard <ArrowRight size={15} /></a>
       </div>
-    </main>
+    </m.main>
   )
 }
 
@@ -246,9 +250,9 @@ function AuthPage({ mode }: { mode: 'login' | 'register' }) {
   const errors = form.formState.errors
 
   return (
-    <main className="auth-page">
+    <m.main className="auth-page" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }}>
       <section className="auth-story">
-        <Link to="/login" className="brand"><span className="brand-mark"><Leaf size={21} /></span>freshdesk</Link>
+        <Link to="/login" className="brand"><span className="brand-mark"><BrandMark /></span>freshdesk</Link>
         <div className="story-copy">
           <div className="story-pill"><span className="live-dot" /> BUILT FOR THE DAILY RUSH</div>
           <h1>Good things,<br /><em>made simple.</em></h1>
@@ -277,7 +281,7 @@ function AuthPage({ mode }: { mode: 'login' | 'register' }) {
           <p className="auth-privacy"><LockKeyhole size={13} /> Your shop data is protected and only visible to your team.</p>
         </div>
       </section>
-    </main>
+    </m.main>
   )
 }
 
@@ -293,10 +297,10 @@ function ForgotPasswordPage() {
     onError: (error) => toast.error(getErrorMessage(error)),
   })
   return (
-    <main className="auth-page">
-      <section className="auth-story"><Link to="/login" className="brand"><span className="brand-mark"><Leaf size={21} /></span>freshdesk</Link><div className="story-copy"><div className="story-pill"><span className="live-dot" /> YOU’RE IN GOOD HANDS</div><h1>A little reset,<br /><em>then you’re back.</em></h1><p>We’ll send a secure link to the email address on your account.</p></div><div className="story-footer"><span>Made for independent shops</span><span>© 2026 Freshdesk</span></div></section>
+    <m.main className="auth-page" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }}>
+      <section className="auth-story"><Link to="/login" className="brand"><span className="brand-mark"><BrandMark /></span>freshdesk</Link><div className="story-copy"><div className="story-pill"><span className="live-dot" /> YOU’RE IN GOOD HANDS</div><h1>A little reset,<br /><em>then you’re back.</em></h1><p>We’ll send a secure link to the email address on your account.</p></div><div className="story-footer"><span>Made for independent shops</span><span>© 2026 Freshdesk</span></div></section>
       <section className="auth-panel"><div className="auth-topline"><span>ACCOUNT RECOVERY</span><Link to="/login">Back to sign in <ArrowRight size={15} /></Link></div><div className="auth-form-wrap"><div className="mini-icon"><Mail size={20} /></div><p className="eyebrow">PASSWORD RESET</p><h2>Forgot your password?</h2><p className="muted">Enter the email you use for Freshdesk.</p><form className="form-stack recovery-form" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}><FormField label="Email address" error={form.formState.errors.email?.message}><div className="input-icon"><Mail size={17} /><input type="email" placeholder="you@yourshop.com" {...form.register('email')} /></div></FormField><button className="button button-primary button-wide" disabled={mutation.isPending}>{mutation.isPending ? 'Sending…' : 'Send reset link'} <ArrowRight size={16} /></button></form></div></section>
-    </main>
+    </m.main>
   )
 }
 
@@ -327,8 +331,8 @@ function OnboardingPage({ user }: { user: User }) {
     onError: (error) => toast.error(getErrorMessage(error)),
   })
   return (
-    <main className="onboarding-page">
-      <Link to="/login" className="brand"><span className="brand-mark"><Leaf size={21} /></span>freshdesk</Link>
+    <m.main className="onboarding-page" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }}>
+      <Link to="/login" className="brand"><span className="brand-mark"><BrandMark /></span>freshdesk</Link>
       <div className="onboarding-card">
         <div className="step-count">STEP <strong>01</strong> <span>OF 01</span></div>
         <div className="mini-icon"><Store size={20} /></div>
@@ -346,7 +350,7 @@ function OnboardingPage({ user }: { user: User }) {
         </form>
         <p className="auth-privacy"><ShieldCheck size={14} /> Your shop data is visible only to members you invite.</p>
       </div>
-    </main>
+    </m.main>
   )
 }
 
@@ -355,6 +359,10 @@ function Dashboard({ user, shop, role, isSuperAdmin }: { user: User; shop: Shop;
   const location = useLocation()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [coverFile, setCoverFile] = useState<File | null>(null)
+  const [removeLogo, setRemoveLogo] = useState(false)
+  const [removeCover, setRemoveCover] = useState(false)
   const queryClient = useQueryClient()
   const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Shop owner'
   const initials = name.split(/\s+/).slice(0, 2).map((part: string) => part[0]?.toUpperCase()).join('')
@@ -390,20 +398,61 @@ function Dashboard({ user, shop, role, isSuperAdmin }: { user: User; shop: Shop;
     defaultValues: { name: shop.name, phone: shop.phone ?? '', email: shop.email ?? '', address: shop.address ?? '' },
     resolver: zodResolver(shopSchema),
   })
+  function cancelShopEdit() {
+    shopForm.reset({ name: shop.name, email: shop.email ?? '', phone: shop.phone ?? '', address: shop.address ?? '' })
+    setLogoFile(null)
+    setCoverFile(null)
+    setRemoveLogo(false)
+    setRemoveCover(false)
+    setEditing(false)
+  }
   const saveShop = useMutation({
     mutationFn: async (values: ShopValues) => {
       if (!supabase) throw new Error('Supabase is not configured.')
-      const { error } = await supabase.from('shops').update({
-        name: values.name,
-        phone: values.phone || null,
-        email: values.email || null,
-        address: values.address || null,
-      }).eq('id', shop.id)
-      if (error) throw error
+      let logoUrl = removeLogo ? null : shop.logo_url ?? null
+      let coverUrl = removeCover ? null : shop.cover_url ?? null
+      const uploadedPaths: string[] = []
+      try {
+        for (const [file, kind] of [[logoFile, 'logo'], [coverFile, 'cover']] as const) {
+          if (!file) continue
+          const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+          const path = `${shop.id}/branding-${kind}-${crypto.randomUUID()}.${extension}`
+          const { error: uploadError } = await supabase.storage.from('menu-images').upload(path, file, {
+            cacheControl: '3600',
+            contentType: file.type,
+            upsert: false,
+          })
+          if (uploadError) throw uploadError
+          uploadedPaths.push(path)
+          const imageUrl = supabase.storage.from('menu-images').getPublicUrl(path).data.publicUrl
+          if (kind === 'logo') logoUrl = imageUrl
+          else coverUrl = imageUrl
+        }
+
+        const { error } = await supabase.from('shops').update({
+          name: values.name,
+          phone: values.phone || null,
+          email: values.email || null,
+          address: values.address || null,
+          logo_url: logoUrl,
+          cover_url: coverUrl,
+        }).eq('id', shop.id)
+        if (error) throw error
+      } catch (error) {
+        if (uploadedPaths.length) {
+          const { error: cleanupError } = await supabase.storage.from('menu-images').remove(uploadedPaths)
+          if (cleanupError) throw new Error(`${getErrorMessage(error)} Image cleanup also failed: ${cleanupError.message}`)
+        }
+        throw error
+      }
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['shops', user.id] })
       setEditing(false)
+      setLogoFile(null)
+      setCoverFile(null)
+      setRemoveLogo(false)
+      setRemoveCover(false)
       toast.success('Shop details updated')
     },
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -423,7 +472,7 @@ function Dashboard({ user, shop, role, isSuperAdmin }: { user: User; shop: Shop;
     <div className="dashboard-shell">
       {mobileNavOpen && <button className="mobile-backdrop" onClick={() => setMobileNavOpen(false)} aria-label="Close navigation" />}
       <aside className={`sidebar ${mobileNavOpen ? 'sidebar-open' : ''}`}>
-        <div className="sidebar-brand"><Link to="/dashboard" className="brand"><span className="brand-mark"><Leaf size={20} /></span><span>freshdesk</span></Link><button className="icon-button mobile-close" onClick={() => setMobileNavOpen(false)} aria-label="Close menu"><X size={18} /></button></div>
+        <div className="sidebar-brand"><Link to="/dashboard" className="brand"><span className="brand-mark"><BrandMark /></span><span>freshdesk</span></Link><button className="icon-button mobile-close" onClick={() => setMobileNavOpen(false)} aria-label="Close menu"><X size={18} /></button></div>
         <div className="workspace-switcher"><div className="shop-avatar"><Store size={16} /></div><div className="workspace-copy"><strong>{shop.name}</strong><span>Shop workspace</span></div><ChevronDown size={16} /></div>
         <div className="nav-heading">WORKSPACE</div>
         <nav className="side-nav">
@@ -442,10 +491,10 @@ function Dashboard({ user, shop, role, isSuperAdmin }: { user: User; shop: Shop;
           <div className="profile-menu"><div className="user-avatar">{initials}</div><div className="profile-info"><strong>{name}</strong><span>{role}</span></div><button className="sidebar-signout" onClick={signOut}><DoorOpen size={16} /><span>Sign out</span></button></div>
         </div>
       </aside>
-      <main className="dashboard-main">
+      <m.main key={activeSection} className="dashboard-main" initial={{ opacity: 0, y: 7 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
         <header className="topbar"><div className="topbar-left"><button className="icon-button mobile-menu" onClick={() => setMobileNavOpen(true)} aria-label="Open menu"><Menu size={20} /></button><div className="breadcrumb"><span>Workspace</span><span className="crumb-slash">/</span><strong>{sectionTitles[activeSection] ?? 'Overview'}</strong></div></div><div className="topbar-actions"><div className="status-chip"><span className="live-dot" /> All systems operational</div><button className={`top-icon ${activeSection === 'notifications' ? 'top-icon-active' : ''}`} onClick={() => navigate('/dashboard/notifications')} aria-label={`Notifications${(unreadNotifications.data ?? 0) > 0 ? `, ${unreadNotifications.data} unread` : ''}`}><Bell size={18} />{(unreadNotifications.data ?? 0) > 0 && <i />}</button><div className="user-avatar user-avatar-small">{initials}</div></div></header>
         {activeSection === 'settings'
-          ? <section className="page-content settings-content"><PageHeading eyebrow="YOUR BUSINESS" title="Shop settings" description="Keep your shop details up to date. These details appear on receipts and your digital menu." /><div className="settings-card"><div className="settings-card-head"><div className="settings-icon"><Store size={18} /></div><div><h3>Business details</h3><p>Your shop identity and contact information</p></div>{canManageShop && <button className="button button-secondary button-small" onClick={() => setEditing((value) => !value)}>{editing ? 'Cancel' : 'Edit details'}</button>}</div><form className="settings-form" onSubmit={shopForm.handleSubmit((values) => saveShop.mutate(values))}><div className="form-grid"><FormField label="Shop name" error={shopForm.formState.errors.name?.message}><input readOnly={!editing} {...shopForm.register('name')} /></FormField><FormField label="Shop email" error={shopForm.formState.errors.email?.message}><input readOnly={!editing} {...shopForm.register('email')} /></FormField><FormField label="Phone number" error={shopForm.formState.errors.phone?.message}><input readOnly={!editing} {...shopForm.register('phone')} /></FormField><FormField label="Currency"><input readOnly value={`${shop.currency} · Indian Rupee`} /></FormField></div><FormField label="Business address" error={shopForm.formState.errors.address?.message}><input readOnly={!editing} {...shopForm.register('address')} /></FormField><div className="settings-divider" /><div className="settings-meta"><div><span>Public menu URL</span><strong>{window.location.origin}/menu/{shop.slug}</strong></div><div><span>Workspace created</span><strong>{new Date(shop.created_at).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</strong></div></div>{editing && <div className="settings-actions"><button type="button" className="button button-secondary" onClick={() => { shopForm.reset({ name: shop.name, email: shop.email ?? '', phone: shop.phone ?? '', address: shop.address ?? '' }); setEditing(false) }}>Cancel</button><button type="submit" className="button button-primary" disabled={saveShop.isPending}>{saveShop.isPending ? 'Saving…' : 'Save changes'} <Check size={16} /></button></div>}</form></div></section>
+          ? <section className="page-content settings-content"><PageHeading eyebrow="YOUR BUSINESS" title="Shop settings" description="Keep your shop details up to date. These details appear on receipts and your digital menu." /><div className="settings-card"><div className="settings-card-head"><div className="settings-icon"><Store size={18} /></div><div><h3>Business details</h3><p>Your shop identity and contact information</p></div>{canManageShop && <button className="button button-secondary button-small" onClick={() => editing ? cancelShopEdit() : setEditing(true)}>{editing ? 'Cancel' : 'Edit details'}</button>}</div><form className="settings-form" onSubmit={shopForm.handleSubmit((values) => saveShop.mutate(values))}><div className="form-grid"><FormField label="Shop name" error={shopForm.formState.errors.name?.message}><input readOnly={!editing} {...shopForm.register('name')} /></FormField><FormField label="Shop email" error={shopForm.formState.errors.email?.message}><input readOnly={!editing} {...shopForm.register('email')} /></FormField><FormField label="Phone number" error={shopForm.formState.errors.phone?.message}><input readOnly={!editing} {...shopForm.register('phone')} /></FormField><FormField label="Currency"><input readOnly value={`${shop.currency} · Indian Rupee`} /></FormField></div><FormField label="Business address" error={shopForm.formState.errors.address?.message}><input readOnly={!editing} {...shopForm.register('address')} /></FormField><div className="settings-divider" /><div className="settings-branding-head"><div><strong>Menu branding</strong><span>Display your logo and a promotional banner on your customer menu.</span></div></div><div className="settings-branding-grid"><div className="settings-branding-item"><div className="settings-branding-preview settings-branding-logo">{logoFile ? <ImagePlus size={23} /> : shop.logo_url && !removeLogo ? <img src={shop.logo_url} alt={`${shop.name} logo`} /> : <ImagePlus size={23} />}</div><div className="settings-branding-copy"><strong>Shop logo</strong><span>Shown beside your shop name and in the hero badge.</span>{editing && <><label className="file-control"><Upload size={14} /><span>{logoFile?.name ?? (shop.logo_url && !removeLogo ? 'Replace current logo' : 'Choose a logo')}</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { const file = event.target.files?.[0] ?? null; if (file && (file.size > 5 * 1024 * 1024 || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type))) { toast.error('Choose a JPG, PNG or WebP image under 5 MB.'); event.target.value = ''; return } setLogoFile(file); setRemoveLogo(false) }} /></label>{shop.logo_url && <button type="button" className="settings-image-remove" onClick={() => { setLogoFile(null); setRemoveLogo((value) => !value) }}>{removeLogo ? 'Keep current logo' : 'Remove logo'}</button>}</>}</div></div><div className="settings-branding-item"><div className="settings-branding-preview settings-branding-cover">{coverFile ? <ImagePlus size={23} /> : shop.cover_url && !removeCover ? <img src={shop.cover_url} alt={`${shop.name} menu banner`} /> : <ImagePlus size={23} />}</div><div className="settings-branding-copy"><strong>Menu banner / advertisement</strong><span>Wide image displayed behind the shop introduction.</span>{editing && <><label className="file-control"><Upload size={14} /><span>{coverFile?.name ?? (shop.cover_url && !removeCover ? 'Replace current banner' : 'Choose a banner')}</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { const file = event.target.files?.[0] ?? null; if (file && (file.size > 5 * 1024 * 1024 || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type))) { toast.error('Choose a JPG, PNG or WebP image under 5 MB.'); event.target.value = ''; return } setCoverFile(file); setRemoveCover(false) }} /></label>{shop.cover_url && <button type="button" className="settings-image-remove" onClick={() => { setCoverFile(null); setRemoveCover((value) => !value) }}>{removeCover ? 'Keep current banner' : 'Remove banner'}</button>}</>}</div></div></div><p className="settings-branding-hint">Images must be JPG, PNG or WebP and 5 MB or smaller. Changes appear on the public menu after saving.</p><div className="settings-divider" /><div className="settings-meta"><div><span>Public menu URL</span><strong>{window.location.origin}/menu/{shop.slug}</strong></div><div><span>Workspace created</span><strong>{new Date(shop.created_at).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</strong></div></div>{editing && <div className="settings-actions"><button type="button" className="button button-secondary" onClick={cancelShopEdit}>Cancel</button><button type="submit" className="button button-primary" disabled={saveShop.isPending}>{saveShop.isPending ? 'Saving…' : 'Save changes'} <Check size={16} /></button></div>}</form></div></section>
           : activeSection === 'menu'
             ? <Suspense fallback={<LoadingPage />}><MenuManagement shop={shop} /></Suspense>
             : activeSection === 'tables'
@@ -476,7 +525,7 @@ function Dashboard({ user, shop, role, isSuperAdmin }: { user: User; shop: Shop;
                   onOpenTables={() => navigate('/dashboard/tables')}
                   onOpenOrders={() => navigate('/dashboard/orders')}
                 />}
-      </main>
+      </m.main>
     </div>
   )
 }
@@ -602,8 +651,8 @@ function OverviewPage({ shop, name, onOpenSettings, onOpenMenu, onOpenTables, on
             <div className="chart-area">
               <div className="chart-gridlines"><i /><i /><i /><i /><i /></div>
               {chartPoints.length > 0 && <svg viewBox="0 0 640 190" preserveAspectRatio="none" aria-label="Payments received over the last seven days">
-                <path d={chartPath} fill="none" stroke="#43885a" strokeWidth="3" vectorEffect="non-scaling-stroke" />
-                {chartPoints.map((point) => <circle key={point.date} cx={point.x} cy={point.y} r="4" fill="#43885a"><title>{`${point.date}: ${dashboardMoney(Number(point.amount), shop.currency)}`}</title></circle>)}
+                <path d={chartPath} fill="none" stroke="#26765b" strokeWidth="3" vectorEffect="non-scaling-stroke" />
+                {chartPoints.map((point) => <circle key={point.date} cx={point.x} cy={point.y} r="4" fill="#26765b"><title>{`${point.date}: ${dashboardMoney(Number(point.amount), shop.currency)}`}</title></circle>)}
               </svg>}
               {overviewQuery.isLoading && <div className="chart-empty"><strong>Loading payment activity…</strong></div>}
               {!overviewQuery.isLoading && !overviewQuery.isError && maxPayment === 0 && <div className="chart-empty"><span className="chart-empty-icon"><FileText size={17} /></span><strong>No payments recorded yet</strong><small>Payments you record will appear here.</small></div>}
@@ -635,7 +684,7 @@ function OverviewPage({ shop, name, onOpenSettings, onOpenMenu, onOpenTables, on
             ))}</div>
               : <div className="empty-state"><div className="empty-art"><ShoppingBasket size={24} /></div><strong>No orders just yet</strong><span>Your first order will appear here once your digital menu is live.</span></div>}
         </div>
-        <div className="panel shop-preview"><div className="panel-header"><div><h3>Your shop</h3><p>Quick look at your public profile</p></div><button className="quiet-link" onClick={onOpenSettings}>Edit <ArrowRight size={14} /></button></div><div className="shop-preview-card"><div className="preview-cover"><div className="preview-logo"><Leaf size={23} /></div><span className="preview-open"><span className="live-dot" /> {setupComplete ? 'Ready for orders' : 'Setup in progress'}</span></div><div className="preview-info"><strong>{shop.name}</strong><span><Store size={14} /> {shop.address || 'Add your address in settings'}</span><span><Clock3 size={14} /> Opening hours not set</span><div className="preview-tags"><span>Digital menu</span><span>QR ordering</span></div></div></div></div>
+        <div className="panel shop-preview"><div className="panel-header"><div><h3>Your shop</h3><p>Quick look at your public profile</p></div><button className="quiet-link" onClick={onOpenSettings}>Edit <ArrowRight size={14} /></button></div><div className="shop-preview-card"><div className="preview-cover" style={shop.cover_url ? { backgroundImage: `linear-gradient(90deg, #174c3ce8, #174c3c45), url("${shop.cover_url}")` } : undefined}><div className="preview-logo">{shop.logo_url ? <img src={shop.logo_url} alt="" /> : <Leaf size={23} />}</div><span className="preview-open"><span className="live-dot" /> {setupComplete ? 'Ready for orders' : 'Setup in progress'}</span></div><div className="preview-info"><strong>{shop.name}</strong><span><Store size={14} /> {shop.address || 'Add your address in settings'}</span><span><Clock3 size={14} /> Opening hours not set</span><div className="preview-tags"><span>Digital menu</span><span>QR ordering</span></div></div></div></div>
       </div>
     </section>
   )

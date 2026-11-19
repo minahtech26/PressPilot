@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery } from '@tanstack/react-query'
+import { m } from 'framer-motion'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, ArrowRight, Check, ChevronDown, CircleAlert, Clock3, Leaf, Minus, Plus, Search, ShoppingBag, ShoppingBasket, Store, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, ChevronDown, CircleAlert, Clock3, Leaf, MapPin, Minus, Plus, Search, ShoppingBag, ShoppingBasket, Store, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '../lib/supabase'
 
@@ -127,6 +128,8 @@ export function PublicMenu() {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [cartOpen, setCartOpen] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const menuSectionRef = useRef<HTMLElement>(null)
   const navigate = useNavigate()
   const form = useForm<CheckoutValues>({
     resolver: zodResolver(checkoutSchema),
@@ -246,7 +249,7 @@ export function PublicMenu() {
     onError: (error) => toast.error(cartError(error)),
   })
 
-  if (menuQuery.isLoading) return <main className="public-loading"><div className="loading-mark"><Leaf size={22} /></div><span>Opening the menu…</span></main>
+  if (menuQuery.isLoading) return <main className="public-loading"><div className="public-loading-inner"><div className="public-loading-brand"><span className="loading-mark"><Leaf size={22} /></span><span>Preparing something fresh…</span></div><div className="public-loading-hero" /><div className="public-loading-grid">{Array.from({ length: 4 }, (_, index) => <div className="public-loading-card" key={index}><div /><span /><span /></div>)}</div></div></main>
   if (menuQuery.isError || !menu) return (
     <main className="public-message">
       <div className="public-message-icon"><Store size={23} /></div>
@@ -256,22 +259,37 @@ export function PublicMenu() {
   )
 
   return (
-    <main className="public-menu">
+    <m.main className="public-menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25 }}>
       <header className="public-topbar">
         <Link to={`/menu/${encodeURIComponent(shopSlug)}${tableId ? `?table=${encodeURIComponent(tableId)}` : ''}`} className="public-brand">
-          {menu.shop.logo_url ? <img src={menu.shop.logo_url} alt="" /> : <span><Leaf size={19} /></span>}
+          {menu.shop.logo_url ? <img src={menu.shop.logo_url} alt={`${menu.shop.name} logo`} /> : <span><Leaf size={19} /></span>}
           <strong>{menu.shop.name}</strong>
         </Link>
+        {menu.shop.address && <div className="public-header-location"><MapPin size={15} /><span>{menu.shop.address}</span></div>}
         {tableId && <span className="public-table-pill"><span className="live-dot" /> Table order</span>}
-        <button className="public-cart-top" onClick={() => setCartOpen(true)} aria-label={`Open cart, ${cartCount} items`}><ShoppingBag size={18} /><span>{cartCount}</span></button>
+        <div className="public-header-actions">
+          <button className="public-header-icon public-search-shortcut" onClick={() => { menuSectionRef.current?.scrollIntoView({ behavior: 'smooth' }); window.setTimeout(() => searchInputRef.current?.focus(), 250) }} aria-label="Search menu"><Search size={18} /></button>
+          <button className="public-cart-top" onClick={() => setCartOpen(true)} aria-label={`Open cart, ${cartCount} items`}><ShoppingBag size={18} /><span>{cartCount}</span></button>
+        </div>
       </header>
       <div className="public-layout">
         <section className="public-menu-main">
-          <div className="public-hero" style={menu.shop.cover_url ? { backgroundImage: `linear-gradient(90deg, #173a2bd9, #173a2b33), url("${menu.shop.cover_url}")` } : undefined}>
-            <div className="public-hero-content"><span className="public-hero-label"><span className="live-dot" /> MADE FRESH, SERVED HAPPY</span><h1>{menu.shop.name}</h1><p>{menu.shop.address || 'Fresh flavors, made just for you.'}</p>{menu.shop.phone && <a href={`tel:${menu.shop.phone}`}>{menu.shop.phone}</a>}</div>
-            <div className="public-hero-stamp"><Leaf size={26} /><span>Fresh<br />every day</span></div>
+          <div className="public-hero">
+            <div className="public-hero-content">
+              <span className="public-hero-label"><span className="live-dot" /> {menu.shop.name.toUpperCase()} · MADE FRESH</span>
+              <h1>Freshness in<br /><em>Every Sip.</em></h1>
+              <p>Bright, feel-good flavors made fresh and ready for your day.</p>
+              <button className="public-hero-cta" onClick={() => menuSectionRef.current?.scrollIntoView({ behavior: 'smooth' })}>Explore menu <ArrowRight size={16} /></button>
+              {menu.shop.phone && <a className="public-hero-phone" href={`tel:${menu.shop.phone}`}>{menu.shop.phone}</a>}
+            </div>
+            <div className="public-hero-visual">
+              {(menu.shop.cover_url || allProducts.find((product) => product.image_url)?.image_url) && <img src={menu.shop.cover_url || allProducts.find((product) => product.image_url)?.image_url || ''} alt={menu.shop.cover_url ? `${menu.shop.name} promotion` : allProducts.find((product) => product.image_url)?.name ?? ''} />}
+              {!menu.shop.cover_url && menu.shop.logo_url && <div className="public-hero-logo"><img src={menu.shop.logo_url} alt="" /></div>}
+              <span className="public-hero-promo"><span className="public-hero-promo-dot" /> Freshly made</span>
+            </div>
           </div>
-          <div className="public-heading-row"><div><p className="eyebrow">THE GOOD STUFF</p><h2>Our menu</h2><p>Made with fresh ingredients and a little love.</p></div><label className="public-search"><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Find your favorite" /></label></div>
+          <section className="public-menu-section" id="menu" ref={menuSectionRef}>
+          <div className="public-heading-row"><div><p className="eyebrow">PICK YOUR POUR</p><h2>Made for your mood</h2><p>Find your new favorite, freshly prepared.</p></div><label className="public-search"><Search size={16} /><input ref={searchInputRef} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search the menu" /></label></div>
           <nav className="menu-category-tabs" aria-label="Menu categories">
             <button className={selectedCategory === 'all' ? 'category-tab active' : 'category-tab'} onClick={() => setSelectedCategory('all')}>Everything</button>
             {menu.categories.map((category) => <button key={category.id} className={selectedCategory === category.id ? 'category-tab active' : 'category-tab'} onClick={() => setSelectedCategory(category.id)}>{category.name}</button>)}
@@ -281,7 +299,8 @@ export function PublicMenu() {
               {activeCategory && <div className="public-category-heading"><h3>{activeCategory.name}</h3>{activeCategory.description && <span>{activeCategory.description}</span>}</div>}
               <div className="public-product-grid">{filteredProducts.map(({ product, categoryName }) => <PublicProductCard key={product.id} product={product} categoryName={categoryName} currency={menu.shop.currency} onAdd={addToCart} />)}</div>
             </section>
-          ) : <div className="public-menu-empty"><Search size={22} /><strong>Nothing on the menu just yet</strong><span>Try a different search or category.</span></div>}
+          ) : <div className="public-menu-empty"><Search size={22} /><strong>{search.trim() ? 'No matches for that search' : 'Nothing on the menu just yet'}</strong><span>{search.trim() ? 'Try another name or choose a different category.' : 'Please check back soon.'}</span></div>}
+          </section>
         </section>
         <aside className={`public-cart ${cartOpen ? 'public-cart-open' : ''}`}>
           <div className="public-cart-head"><div><p className="eyebrow">{tableId ? 'AT YOUR TABLE' : 'FRESHLY PICKED'}</p><h2>Your order</h2></div><button className="icon-button public-cart-close" onClick={() => setCartOpen(false)} aria-label="Close cart"><X size={19} /></button></div>
@@ -290,7 +309,8 @@ export function PublicMenu() {
             <>
               <div className="cart-lines">{resolvedCart.map((entry) => (
                 <div className="cart-line" key={`${entry.productId}:${entry.variantId ?? ''}:${entry.customizations.slice().sort().join(',')}`}>
-                    <div className="cart-line-copy"><strong>{entry.product.name}</strong>{entry.variant && <span>{entry.variant.name}</span>}{entry.customizationsResolved.length > 0 && <span className="cart-line-customizations">{entry.customizationsResolved.map(({ group, option }) => `${group.name}: ${option.name}`).join(' · ')}</span>}<small>{money(entry.unitPrice * entry.quantity, menu.shop.currency)}</small></div>
+                  <div className="cart-line-thumb">{entry.product.image_url ? <img src={entry.product.image_url} alt="" /> : <Leaf size={17} />}</div>
+                  <div className="cart-line-copy"><strong>{entry.product.name}</strong>{entry.variant && <span>{entry.variant.name}</span>}{entry.customizationsResolved.length > 0 && <span className="cart-line-customizations">{entry.customizationsResolved.map(({ group, option }) => `${group.name}: ${option.name}`).join(' · ')}</span>}<small>{money(entry.unitPrice * entry.quantity, menu.shop.currency)}</small></div>
                   <div className="quantity-control"><button aria-label={`Remove one ${entry.product.name}`} onClick={() => setQuantity(entry, entry.quantity - 1)}><Minus size={13} /></button><span>{entry.quantity}</span><button aria-label={`Add one ${entry.product.name}`} onClick={() => setQuantity(entry, entry.quantity + 1)}><Plus size={13} /></button></div>
                 </div>
               ))}</div>
@@ -316,7 +336,7 @@ export function PublicMenu() {
           </form>
         </section>
       </div>}
-    </main>
+    </m.main>
   )
 }
 
@@ -339,15 +359,17 @@ function PublicProductCard({ product, categoryName, currency, onAdd }: { product
   const price = (selectedVariant?.price ?? product.base_price) + selectedCustomizationPrice
   return (
     <article className="public-product-card">
-      <div className="public-product-image">
-        {product.image_url ? <img src={product.image_url} alt={product.name} loading="lazy" /> : <div className="product-placeholder"><Leaf size={25} /><span>Freshly made</span></div>}
+      <div className={`public-product-image${product.image_url ? '' : ' public-product-no-image'}`}>
+        {product.image_url ? <img src={product.image_url} alt={product.name} loading="lazy" /> : <div className="product-placeholder" aria-label="Product photo unavailable"><Leaf size={22} /></div>}
         {product.is_featured && <span className="featured-badge">SHOP FAVORITE</span>}
-        {product.is_vegetarian && <span className="veg-badge" title="Vegetarian"><i /></span>}
+        {product.is_vegetarian && <span className="veg-badge" title="Vegetarian"><i /> Veg</span>}
+        {product.is_vegetarian === false && <span className="non-veg-badge" title="Non-vegetarian"><i /> Non-veg</span>}
       </div>
       <div className="public-product-info">
         <span className="public-product-category">{categoryName}</span>
         <div className="public-product-name"><h4>{product.name}</h4><strong>{money(price, currency)}</strong></div>
         {product.description && <p>{product.description}</p>}
+        <span className="public-product-availability"><span /> Available now</span>
         {product.variants.length > 0 && <label className="variant-select"><span>Choose size</span><span className="variant-select-control"><select value={variantId} onChange={(event) => setVariantId(event.target.value)}>{product.variants.map((variant) => <option value={variant.id} key={variant.id}>{variant.name} · {money(variant.price, currency)}</option>)}</select><ChevronDown size={14} /></span></label>}
         {product.customization_groups.map((group) => (
           <label className="variant-select" key={group.id}>
@@ -361,7 +383,7 @@ function PublicProductCard({ product, categoryName, currency, onAdd }: { product
             </span>
           </label>
         ))}
-        <button className="add-product-button" onClick={() => onAdd(product, variantId || null, Object.values(selectedOptions).filter(Boolean))}><Plus size={15} /> Add to order</button>
+        <button className="add-product-button" onClick={() => onAdd(product, variantId || null, Object.values(selectedOptions).filter(Boolean))}><Plus size={15} /> Add to cart</button>
       </div>
     </article>
   )
@@ -374,7 +396,7 @@ export function PublicOrderConfirmation() {
   const location = useLocation()
   const state = location.state as { orderNumber?: number; total?: number; currency?: string } | null
   return (
-    <main className="order-confirmation-page">
+    <m.main className="order-confirmation-page" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }}>
       <div className="order-confirmation-card">
         <div className="order-success-mark"><Check size={29} /></div>
         <p className="eyebrow">ORDER RECEIVED</p>
@@ -387,6 +409,6 @@ export function PublicOrderConfirmation() {
         <small className="confirmation-private"><CircleAlert size={13} /> Keep your order number handy for reference.</small>
       </div>
       <div className="confirmation-brand"><Leaf size={15} /> Fresh from {shopSlug.replace(/-/g, ' ')}</div>
-    </main>
+    </m.main>
   )
 }
