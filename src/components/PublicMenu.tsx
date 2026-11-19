@@ -179,16 +179,15 @@ export function PublicMenu() {
   const subtotal = resolvedCart.reduce((total, entry) => total + entry.unitPrice * entry.quantity, 0)
   const estimatedTax = resolvedCart.reduce((total, entry) => total + Math.round(entry.unitPrice * entry.quantity * Number(entry.product.tax_rate) / 100 * 100) / 100, 0)
   const estimatedTotal = subtotal + estimatedTax
-  const filteredCategories = useMemo(() => {
+  const filteredProducts = useMemo(() => {
     const query = search.trim().toLowerCase()
     return (menu?.categories ?? [])
       .filter((category) => selectedCategory === 'all' || category.id === selectedCategory)
-      .map((category) => ({
-        ...category,
-        products: category.products.filter((product) => !query || `${product.name} ${product.description ?? ''}`.toLowerCase().includes(query)),
-      }))
-      .filter((category) => category.products.length > 0)
+      .flatMap((category) => category.products
+        .filter((product) => !query || `${product.name} ${product.description ?? ''}`.toLowerCase().includes(query))
+        .map((product) => ({ product, categoryName: category.name })))
   }, [menu, search, selectedCategory])
+  const activeCategory = menu?.categories.find((category) => category.id === selectedCategory)
 
   function addToCart(product: MenuProduct, variantId: string | null, customizations: string[]) {
     const customizationKey = [...customizations].sort().join(',')
@@ -277,12 +276,12 @@ export function PublicMenu() {
             <button className={selectedCategory === 'all' ? 'category-tab active' : 'category-tab'} onClick={() => setSelectedCategory('all')}>Everything</button>
             {menu.categories.map((category) => <button key={category.id} className={selectedCategory === category.id ? 'category-tab active' : 'category-tab'} onClick={() => setSelectedCategory(category.id)}>{category.name}</button>)}
           </nav>
-          {filteredCategories.length ? filteredCategories.map((category) => (
-            <section className="public-category-section" key={category.id}>
-              <div className="public-category-heading"><h3>{category.name}</h3>{category.description && <span>{category.description}</span>}</div>
-              <div className="public-product-grid">{category.products.map((product) => <PublicProductCard key={product.id} product={product} currency={menu.shop.currency} onAdd={addToCart} />)}</div>
+          {filteredProducts.length ? (
+            <section className="public-category-section">
+              {activeCategory && <div className="public-category-heading"><h3>{activeCategory.name}</h3>{activeCategory.description && <span>{activeCategory.description}</span>}</div>}
+              <div className="public-product-grid">{filteredProducts.map(({ product, categoryName }) => <PublicProductCard key={product.id} product={product} categoryName={categoryName} currency={menu.shop.currency} onAdd={addToCart} />)}</div>
             </section>
-          )) : <div className="public-menu-empty"><Search size={22} /><strong>Nothing on the menu just yet</strong><span>Try a different search or category.</span></div>}
+          ) : <div className="public-menu-empty"><Search size={22} /><strong>Nothing on the menu just yet</strong><span>Try a different search or category.</span></div>}
         </section>
         <aside className={`public-cart ${cartOpen ? 'public-cart-open' : ''}`}>
           <div className="public-cart-head"><div><p className="eyebrow">{tableId ? 'AT YOUR TABLE' : 'FRESHLY PICKED'}</p><h2>Your order</h2></div><button className="icon-button public-cart-close" onClick={() => setCartOpen(false)} aria-label="Close cart"><X size={19} /></button></div>
@@ -327,7 +326,7 @@ function sameCartLine(left: CartEntry, right: CartEntry) {
     && [...left.customizations].sort().join(',') === [...right.customizations].sort().join(',')
 }
 
-function PublicProductCard({ product, currency, onAdd }: { product: MenuProduct; currency: string; onAdd: (product: MenuProduct, variantId: string | null, customizations: string[]) => void }) {
+function PublicProductCard({ product, categoryName, currency, onAdd }: { product: MenuProduct; categoryName: string; currency: string; onAdd: (product: MenuProduct, variantId: string | null, customizations: string[]) => void }) {
   const [variantId, setVariantId] = useState(product.variants[0]?.id ?? '')
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(() => Object.fromEntries(
     product.customization_groups.map((group) => [group.id, group.is_required ? group.options[0]?.id ?? '' : '']),
@@ -346,6 +345,7 @@ function PublicProductCard({ product, currency, onAdd }: { product: MenuProduct;
         {product.is_vegetarian && <span className="veg-badge" title="Vegetarian"><i /></span>}
       </div>
       <div className="public-product-info">
+        <span className="public-product-category">{categoryName}</span>
         <div className="public-product-name"><h4>{product.name}</h4><strong>{money(price, currency)}</strong></div>
         {product.description && <p>{product.description}</p>}
         {product.variants.length > 0 && <label className="variant-select"><span>Choose size</span><span className="variant-select-control"><select value={variantId} onChange={(event) => setVariantId(event.target.value)}>{product.variants.map((variant) => <option value={variant.id} key={variant.id}>{variant.name} · {money(variant.price, currency)}</option>)}</select><ChevronDown size={14} /></span></label>}

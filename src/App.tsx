@@ -439,7 +439,7 @@ function Dashboard({ user, shop, role, isSuperAdmin }: { user: User; shop: Shop;
         </nav>
         <div className="sidebar-bottom">
           <div className="help-card"><div className="help-icon"><CircleHelp size={17} /></div><strong>Need a hand?</strong><span>We’re here to help you get set up.</span><button onClick={() => toast.info('Help center will be available soon.')}>Visit help center <ArrowRight size={13} /></button></div>
-          <div className="profile-menu"><div className="user-avatar">{initials}</div><div className="profile-info"><strong>{name}</strong><span>{role}</span></div><button className="icon-button" onClick={signOut} aria-label="Sign out"><DoorOpen size={17} /></button></div>
+          <div className="profile-menu"><div className="user-avatar">{initials}</div><div className="profile-info"><strong>{name}</strong><span>{role}</span></div><button className="sidebar-signout" onClick={signOut}><DoorOpen size={16} /><span>Sign out</span></button></div>
         </div>
       </aside>
       <main className="dashboard-main">
@@ -481,23 +481,162 @@ function Dashboard({ user, shop, role, isSuperAdmin }: { user: User; shop: Shop;
   )
 }
 
+interface DashboardOverviewData {
+  summary: {
+    payments_today: number
+    orders_today: number
+    active_tables: number
+    team_members: number
+  }
+  payments_by_day: Array<{ date: string; amount: number }>
+  setup: {
+    has_menu: boolean
+    has_tables: boolean
+    has_team: boolean
+    has_orders: boolean
+  }
+  recent_orders: Array<{
+    id: string
+    order_number: number
+    status: string
+    total: number
+    created_at: string
+    table_number: string | null
+  }>
+}
+
+function dashboardMoney(value: number, currency: string) {
+  try {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency,
+      maximumFractionDigits: 0,
+      notation: Math.abs(value) >= 100000 ? 'compact' : 'standard',
+    }).format(value)
+  } catch {
+    return `${currency} ${Math.round(value).toLocaleString('en-IN')}`
+  }
+}
+
+function DashboardDate({ date, weekday = false }: { date: string; weekday?: boolean }) {
+  const parsed = new Date(`${date}T00:00:00`)
+  return <>{parsed.toLocaleDateString('en-IN', weekday ? { weekday: 'short' } : { day: 'numeric', month: 'short' })}</>
+}
+
 function OverviewPage({ shop, name, onOpenSettings, onOpenMenu, onOpenTables, onOpenOrders }: { shop: Shop; name: string; onOpenSettings: () => void; onOpenMenu: () => void; onOpenTables: () => void; onOpenOrders: () => void }) {
   const firstName = name.split(/\s+/)[0]
+  const overviewQuery = useQuery({
+    queryKey: ['shop-dashboard-overview', shop.id],
+    queryFn: async () => {
+      if (!supabase) throw new Error('Supabase is not configured.')
+      const { data, error } = await supabase.rpc('get_shop_dashboard_overview', {
+        target_shop_id: shop.id,
+        timezone_name: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+      })
+      if (error) throw error
+      if (!data || typeof data !== 'object') throw new Error('The shop overview returned an invalid response.')
+      return data as DashboardOverviewData
+    },
+    refetchInterval: 60_000,
+  })
+  const overview = overviewQuery.data
+  const setup = overview?.setup
+  const completedSteps = overview ? 1 + Number(setup?.has_menu) + Number(setup?.has_tables) + Number(setup?.has_orders) : 0
+  const steps = [
+    { done: true, title: 'Create your workspace', detail: shop.name, onClick: onOpenSettings, icon: Check },
+    { done: Boolean(setup?.has_menu), title: 'Add your menu', detail: setup?.has_menu ? 'Products are ready for customers' : 'Add products and prices', onClick: onOpenMenu, icon: BookOpen },
+    { done: Boolean(setup?.has_tables), title: 'Add your tables', detail: setup?.has_tables ? 'Table QR codes are ready' : 'Create tables and print QR codes', onClick: onOpenTables, icon: Table2 },
+    { done: Boolean(setup?.has_orders), title: 'Receive your first order', detail: setup?.has_orders ? 'Your team is taking orders' : 'Share your menu or table QR code', onClick: onOpenOrders, icon: ShoppingBasket },
+  ]
+  const payments = overview?.payments_by_day ?? []
+  const maxPayment = Math.max(0, ...payments.map((day) => Number(day.amount)))
+  const rawChartStep = maxPayment > 0 ? maxPayment / 4 : 1
+  const chartMagnitude = 10 ** Math.floor(Math.log10(rawChartStep))
+  const chartMax = Math.ceil(rawChartStep / chartMagnitude) * chartMagnitude * 4
+  const chartPoints = payments.map((day, index) => ({
+    ...day,
+    x: payments.length > 1 ? (index / (payments.length - 1)) * 640 : 320,
+    y: 166 - (Number(day.amount) / chartMax) * 148,
+  }))
+  const chartPath = chartPoints.map((point, index) => `${index === 0 ? 'M' : 'L'}${point.x},${point.y}`).join(' ')
+  const greeting = new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening'
+  const setupComplete = completedSteps === steps.length
+  const continueSetup = !setup?.has_menu ? onOpenMenu : !setup.has_tables ? onOpenTables : onOpenOrders
+
   return (
     <section className="page-content">
-      <div className="welcome-row"><PageHeading eyebrow="TUESDAY, NOVEMBER 17" title={`Good afternoon, ${firstName}.`} description="Here’s your shop at a glance. Your fresh start begins here." /><button className="button button-primary" onClick={onOpenSettings}><Settings size={16} /> Set up your shop <ArrowRight size={15} /></button></div>
-      <div className="setup-banner"><div className="banner-symbol"><Leaf size={22} /></div><div className="banner-copy"><strong>Your workspace is ready for its first order.</strong><span>Add your menu and tables to start taking orders from a QR code.</span></div><div className="banner-progress"><span>Getting started</span><div className="progress-track"><i /></div><small>1 of 5 steps</small></div><ArrowRight size={17} className="banner-arrow" /></div>
+      <div className="welcome-row">
+        <PageHeading eyebrow={new Date().toLocaleDateString('en-IN', { weekday: 'long', month: 'long', day: 'numeric' }).toUpperCase()} title={`${greeting}, ${firstName}.`} description="Here’s your shop at a glance." />
+        <button className="button button-primary" onClick={setupComplete ? onOpenOrders : continueSetup}>
+          <Settings size={16} /> {setupComplete ? 'View orders' : 'Continue setup'} <ArrowRight size={15} />
+        </button>
+      </div>
+      <div className={`setup-banner ${setupComplete ? 'setup-banner-complete' : ''}`}>
+        <div className="banner-symbol">{setupComplete ? <Check size={22} /> : <Leaf size={22} />}</div>
+        <div className="banner-copy">
+          <strong>{setupComplete ? 'Your shop is ready to serve.' : 'Get your shop ready for its first order.'}</strong>
+          <span>{setupComplete ? 'Your menu and table ordering are set up.' : 'Add your menu and tables to start taking orders from a QR code.'}</span>
+        </div>
+        <div className="banner-progress">
+          <span>{setupComplete ? 'Setup complete' : 'Getting started'}</span>
+          <div className="progress-track"><i style={{ width: `${(completedSteps / steps.length) * 100}%` }} /></div>
+          <small>{overviewQuery.isLoading ? 'Loading setup status…' : `${completedSteps} of ${steps.length} steps`}</small>
+        </div>
+        <ArrowRight size={17} className="banner-arrow" />
+      </div>
+      {overviewQuery.isError && <div className="overview-query-error" role="alert">Shop overview could not be loaded. Check your connection and confirm the latest Supabase migration has been applied.</div>}
       <div className="metric-grid">
-        <MetricCard label="Today’s sales" value="₹0" change="Orders not connected yet" icon={CreditCard} iconTone="green" />
-        <MetricCard label="Orders today" value="—" change="Menu setup is next" icon={ShoppingBasket} iconTone="blue" />
-        <MetricCard label="Active tables" value="0" change="No tables added yet" icon={Table2} iconTone="amber" />
-        <MetricCard label="Team members" value="1" change="Just you for now" icon={Users} iconTone="purple" />
+        <MetricCard label="Payments today" value={overview ? dashboardMoney(Number(overview.summary.payments_today), shop.currency) : '—'} change={overviewQuery.isLoading ? 'Loading payment activity…' : 'Recorded customer payments'} icon={CreditCard} iconTone="green" />
+        <MetricCard label="Orders today" value={overview ? Number(overview.summary.orders_today).toLocaleString('en-IN') : '—'} change="Non-cancelled orders placed today" icon={ShoppingBasket} iconTone="blue" />
+        <MetricCard label="Active tables" value={overview ? Number(overview.summary.active_tables).toLocaleString('en-IN') : '—'} change="Tables available for service" icon={Table2} iconTone="amber" />
+        <MetricCard label="Team members" value={overview ? Number(overview.summary.team_members).toLocaleString('en-IN') : '—'} change="People in this shop workspace" icon={Users} iconTone="purple" />
       </div>
       <div className="content-grid">
-        <div className="panel activity-panel"><div className="panel-header"><div><h3>Sales overview</h3><p>Your revenue will show here once you start selling.</p></div><button className="select-button" onClick={() => toast.info('Analytics will be available after you connect orders.')}>This week <ChevronDown size={14} /></button></div><div className="chart-placeholder"><div className="chart-y-labels"><span>₹4k</span><span>₹3k</span><span>₹2k</span><span>₹1k</span><span>₹0</span></div><div className="chart-area"><div className="chart-gridlines"><i /><i /><i /><i /><i /></div><svg viewBox="0 0 640 190" preserveAspectRatio="none" aria-label="No sales data yet"><path d="M0 166 C80 162 95 166 130 158 S195 170 235 151 S295 163 330 155 S385 161 425 143 S485 157 530 136 S590 146 640 132" fill="none" stroke="#d7e8d9" strokeWidth="3" strokeDasharray="7 7" /></svg><div className="chart-empty"><span className="chart-empty-icon"><FileText size={17} /></span><strong>Your sales story starts here</strong><small>Orders and revenue will appear as you serve customers.</small></div><div className="chart-x-labels"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div></div></div></div>
-        <div className="panel quickstart-panel"><div className="panel-header"><div><h3>Quick start</h3><p>A few small steps to get going</p></div><span className="round-count">1/5</span></div><div className="quicksteps"><button className="quickstep quickstep-done"><span className="step-icon"><Check size={15} /></span><span><strong>Create your workspace</strong><small>Done — {shop.name}</small></span></button><button className="quickstep" onClick={onOpenMenu}><span className="step-icon"><BookOpen size={16} /></span><span><strong>Add your menu</strong><small>Products, prices and categories</small></span><ArrowRight size={15} /></button><button className="quickstep" onClick={onOpenTables}><span className="step-icon"><Table2 size={16} /></span><span><strong>Add your tables</strong><small>Give every table its own QR</small></span><ArrowRight size={15} /></button><button className="quickstep" onClick={() => toast.info('Team management is coming soon.')}><span className="step-icon"><Users size={16} /></span><span><strong>Invite your team</strong><small>Bring your crew on board</small></span><ArrowRight size={15} /></button></div></div>
+        <div className="panel activity-panel">
+          <div className="panel-header">
+            <div><h3>Payments received</h3><p>Customer payments collected over the last 7 days.</p></div>
+            <span className="select-button">Last 7 days</span>
+          </div>
+          <div className="chart-placeholder">
+            <div className="chart-y-labels">{[4, 3, 2, 1, 0].map((step) => <span key={step}>{dashboardMoney((chartMax / 4) * step, shop.currency)}</span>)}</div>
+            <div className="chart-area">
+              <div className="chart-gridlines"><i /><i /><i /><i /><i /></div>
+              {chartPoints.length > 0 && <svg viewBox="0 0 640 190" preserveAspectRatio="none" aria-label="Payments received over the last seven days">
+                <path d={chartPath} fill="none" stroke="#43885a" strokeWidth="3" vectorEffect="non-scaling-stroke" />
+                {chartPoints.map((point) => <circle key={point.date} cx={point.x} cy={point.y} r="4" fill="#43885a"><title>{`${point.date}: ${dashboardMoney(Number(point.amount), shop.currency)}`}</title></circle>)}
+              </svg>}
+              {overviewQuery.isLoading && <div className="chart-empty"><strong>Loading payment activity…</strong></div>}
+              {!overviewQuery.isLoading && !overviewQuery.isError && maxPayment === 0 && <div className="chart-empty"><span className="chart-empty-icon"><FileText size={17} /></span><strong>No payments recorded yet</strong><small>Payments you record will appear here.</small></div>}
+              <div className="chart-x-labels">{payments.map((day) => <span key={day.date}><DashboardDate date={day.date} weekday /></span>)}</div>
+            </div>
+          </div>
+        </div>
+        <div className="panel quickstart-panel">
+          <div className="panel-header"><div><h3>Quick start</h3><p>Set up your shop for customer orders</p></div><span className="round-count">{completedSteps}/{steps.length}</span></div>
+          <div className="quicksteps">{steps.map(({ done, title, detail, onClick, icon: Icon }) => (
+            <button key={title} className={`quickstep ${done ? 'quickstep-done' : ''}`} onClick={onClick}>
+              <span className="step-icon"><Icon size={15} /></span>
+              <span><strong>{title}</strong><small>{done ? `Done · ${detail}` : detail}</small></span>
+              {!done && <ArrowRight size={15} />}
+            </button>
+          ))}</div>
+        </div>
       </div>
-      <div className="lower-grid"><div className="panel empty-orders"><div className="panel-header"><div><h3>Recent orders</h3><p>Latest activity from your customers</p></div><button className="quiet-link" onClick={onOpenOrders}>View all <ArrowRight size={14} /></button></div><div className="empty-state"><div className="empty-art"><ShoppingBasket size={24} /></div><strong>No orders just yet</strong><span>Your first order will appear here once your digital menu is live.</span></div></div><div className="panel shop-preview"><div className="panel-header"><div><h3>Your shop</h3><p>Quick look at your public profile</p></div><button className="quiet-link" onClick={onOpenSettings}>Edit <ArrowRight size={14} /></button></div><div className="shop-preview-card"><div className="preview-cover"><div className="preview-logo"><Leaf size={23} /></div><span className="preview-open"><span className="live-dot" /> Setup in progress</span></div><div className="preview-info"><strong>{shop.name}</strong><span><Store size={14} /> {shop.address || 'Add your address in settings'}</span><span><Clock3 size={14} /> Opening hours not set</span><div className="preview-tags"><span>Digital menu</span><span>QR ordering</span></div></div></div></div></div>
+      <div className="lower-grid">
+        <div className="panel empty-orders"><div className="panel-header"><div><h3>Recent orders</h3><p>Latest activity from your customers</p></div><button className="quiet-link" onClick={onOpenOrders}>View all <ArrowRight size={14} /></button></div>
+          {overviewQuery.isLoading ? <div className="empty-state">Loading recent orders…</div>
+            : overview?.recent_orders.length ? <div className="dashboard-recent-orders">{overview.recent_orders.map((order) => (
+              <button className="dashboard-recent-order" key={order.id} onClick={onOpenOrders}>
+                <span className="dashboard-order-number">#{order.order_number}</span>
+                <span className="dashboard-order-info"><strong>{order.table_number ? `Table ${order.table_number}` : 'Pickup order'}</strong><small>{new Date(order.created_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</small></span>
+                <span className={`dashboard-order-status order-status-${order.status}`}>{order.status.replace('_', ' ')}</span>
+                <strong className="dashboard-order-total">{dashboardMoney(Number(order.total), shop.currency)}</strong>
+              </button>
+            ))}</div>
+              : <div className="empty-state"><div className="empty-art"><ShoppingBasket size={24} /></div><strong>No orders just yet</strong><span>Your first order will appear here once your digital menu is live.</span></div>}
+        </div>
+        <div className="panel shop-preview"><div className="panel-header"><div><h3>Your shop</h3><p>Quick look at your public profile</p></div><button className="quiet-link" onClick={onOpenSettings}>Edit <ArrowRight size={14} /></button></div><div className="shop-preview-card"><div className="preview-cover"><div className="preview-logo"><Leaf size={23} /></div><span className="preview-open"><span className="live-dot" /> {setupComplete ? 'Ready for orders' : 'Setup in progress'}</span></div><div className="preview-info"><strong>{shop.name}</strong><span><Store size={14} /> {shop.address || 'Add your address in settings'}</span><span><Clock3 size={14} /> Opening hours not set</span><div className="preview-tags"><span>Digital menu</span><span>QR ordering</span></div></div></div></div>
+      </div>
     </section>
   )
 }
