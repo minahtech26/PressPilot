@@ -264,9 +264,9 @@ export function PublicMenu() {
       setCheckoutOpen(false)
       setCartOpen(false)
       const orderNumber = `#${order.order_number}`
-      const items = resolvedCart.map((entry) => `${entry.quantity} × ${entry.product.name}${entry.variant ? ` (${entry.variant.name})` : ''}`)
+      const items = resolvedCart.map((entry) => `Order item: ${entry.product.name}${entry.variant ? ` (${entry.variant.name})` : ''}\nQuantity: ${entry.quantity}`)
       const smsHref = sendOrderSms
-        ? buildSmsHref(menu?.shop.phone, `Hello ${menu?.shop.name ?? 'shop'}, I placed order ${orderNumber}: ${items.join(', ')}. Total: ${money(order.total, menu?.shop.currency ?? 'INR')}.`)
+        ? buildSmsHref(menu?.shop.phone, `New order for ${menu?.shop.name ?? 'shop'}\nOrder no: ${orderNumber}\n${items.join('\n')}\nTotal: ${money(order.total, menu?.shop.currency ?? 'INR')}`)
         : null
       navigate(`/menu/${encodeURIComponent(shopSlug)}/order/${order.id}${tableId ? `?table=${encodeURIComponent(tableId)}` : ''}`, {
         replace: true,
