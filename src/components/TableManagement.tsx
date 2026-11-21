@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Check, Download, Pencil, Plus, Printer, QrCode, Store, Trash2, X } from 'lucide-react'
 import { toast } from 'sonner'
-import type { Shop } from '../lib/types'
+import type { Shop, ShopRole } from '../lib/types'
 import { supabase } from '../lib/supabase'
 
 interface DiningTable {
@@ -12,6 +12,7 @@ interface DiningTable {
   table_number: string
   status: 'available' | 'occupied' | 'order_pending' | 'preparing' | 'bill_pending' | 'payment_completed'
   is_active: boolean
+  dueAmount: number
 }
 
 const tableStatuses: Record<DiningTable['status'], string> = {
@@ -33,7 +34,15 @@ function escapeHtml(text: string) {
   })[character]!)
 }
 
-export function TableManagement({ shop }: { shop: Shop }) {
+function money(value: number, currency: string) {
+  try {
+    return new Intl.NumberFormat('en-IN', { style: 'currency', currency }).format(value)
+  } catch {
+    return `${currency} ${Number(value).toFixed(2)}`
+  }
+}
+
+export function TableManagement({ shop, role }: { shop: Shop; role: ShopRole }) {
   const queryClient = useQueryClient()
   const [tableName, setTableName] = useState('')
   const [tableNumber, setTableNumber] = useState('')
@@ -42,13 +51,86 @@ export function TableManagement({ shop }: { shop: Shop }) {
   const [editNumber, setEditNumber] = useState('')
 
   const tablesQuery = useQuery({
-    queryKey: ['dining-tables', shop.id],
+    queryKey: ['dining-tables', shop.id, role],
     queryFn: async () => {
-      const { data, error } = await supabase!.from('dining_tables').select('*').eq('shop_id', shop.id).order('table_number')
-      if (error) throw error
-      return data as DiningTable[]
+      if (!supabase) throw new Error('Supabase is not configured.')
+      const [tablesResult, ordersResult] = await Promise.all([
+        supabase.from('dining_tables').select('*').eq('shop_id', shop.id).order('table_number'),
+        supabase.from('orders')
+          .select('id,table_id,total,order_items(id)')
+          .eq('shop_id', shop.id)
+          .in('status', ['served', 'completed'])
+          .in('payment_status', ['unpaid', 'partial'])
+          .not('table_id', 'is', null),
+      ])
+      if (tablesResult.error) throw tablesResult.error
+      if (ordersResult.error) throw ordersResult.error
+
+      let openBills: Array<{
+        table_id: string | null
+        total: number
+        paid_amount: number
+        bill_items: Array<{ order_item_id: string | null }>
+      }> = []
+      if (role !== 'kitchen') {
+        const { data, error } = await supabase.from('bills')
+          .select('id,table_id,total,paid_amount,bill_items(order_item_id)')
+          .eq('shop_id', shop.id)
+          .eq('status', 'open')
+          .not('table_id', 'is', null)
+        if (error) throw error
+        openBills = (data ?? []) as typeof openBills
+      }
+      const unpaidOrders = (ordersResult.data ?? []) as Array<{
+        table_id: string | null
+        total: number
+        order_items: Array<{ id: string }>
+      }>
+      const billedOrderItemIds = new Set(
+        openBills.flatMap((bill) => bill.bill_items.flatMap((item) => item.order_item_id ? [item.order_item_id] : [])),
+      )
+      const dueByTable = new Map<string, number>()
+      function addDue(tableId: string | null, amount: number) {
+        if (!tableId || amount <= 0) return
+        dueByTable.set(tableId, (dueByTable.get(tableId) ?? 0) + amount)
+      }
+
+      if (role !== 'kitchen') {
+        for (const bill of openBills) addDue(bill.table_id, Math.max(0, Number(bill.total) - Number(bill.paid_amount)))
+        for (const order of unpaidOrders) {
+          if (!order.order_items.some((item) => billedOrderItemIds.has(item.id))) addDue(order.table_id, Number(order.total))
+        }
+      }
+
+      return ((tablesResult.data ?? []) as Omit<DiningTable, 'dueAmount'>[]).map((table) => ({
+        ...table,
+        dueAmount: dueByTable.get(table.id) ?? 0,
+      }))
     },
   })
+
+  useEffect(() => {
+    if (!supabase) return
+    const channel = supabase
+      .channel(`table-balances:${shop.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `shop_id=eq.${shop.id}` }, () => {
+        void queryClient.invalidateQueries({ queryKey: ['dining-tables', shop.id] })
+      })
+    if (role !== 'kitchen') {
+      channel.on('postgres_changes', { event: '*', schema: 'public', table: 'bills', filter: `shop_id=eq.${shop.id}` }, () => {
+        void queryClient.invalidateQueries({ queryKey: ['dining-tables', shop.id] })
+      })
+    }
+    channel.subscribe((status) => {
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        toast.error('Live table billing updates disconnected. Check your connection.')
+      }
+    })
+
+    return () => {
+      void supabase?.removeChannel(channel)
+    }
+  }, [queryClient, role, shop.id])
 
   const addTable = useMutation({
     mutationFn: async () => {
@@ -110,13 +192,15 @@ export function TableManagement({ shop }: { shop: Shop }) {
       toast.error('QR code is not ready to download.')
       return
     }
-    const blob = new Blob([qr.outerHTML], { type: 'image/svg+xml;charset=utf-8' })
+    const svg = qr.cloneNode(true) as SVGElement
+    svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    const blob = new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml;charset=utf-8' })
     const objectUrl = URL.createObjectURL(blob)
     const anchor = document.createElement('a')
     anchor.href = objectUrl
     anchor.download = `${shop.slug}-table-${table.table_number}.svg`
     anchor.click()
-    URL.revokeObjectURL(objectUrl)
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000)
   }
 
   function printAllQrs() {
@@ -208,6 +292,7 @@ export function TableManagement({ shop }: { shop: Shop }) {
               ) : (
                 <div className="table-title"><h2>{table.name}</h2><span>Table {table.table_number}</span></div>
               )}
+              {table.dueAmount > 0 && <div className="table-balance-alert"><span>Amount to settle</span><strong>{money(table.dueAmount, shop.currency)}</strong></div>}
               <div className="qr-card-code" data-qr-id={table.id}>
                 {table.is_active ? <QRCodeSVG value={menuUrl(table)} size={142} level="M" includeMargin /> : <div className="qr-inactive"><QrCode size={28} /><span>QR paused</span></div>}
               </div>

@@ -515,7 +515,7 @@ function Dashboard({ user, shop, role, isSuperAdmin }: { user: User; shop: Shop;
           : activeSection === 'menu'
             ? <Suspense fallback={<LoadingPage />}><MenuManagement shop={shop} /></Suspense>
             : activeSection === 'tables'
-              ? <Suspense fallback={<LoadingPage />}><TableManagement shop={shop} /></Suspense>
+              ? <Suspense fallback={<LoadingPage />}><TableManagement shop={shop} role={role} /></Suspense>
               : activeSection === 'orders'
                 ? <Suspense fallback={<LoadingPage />}><OrderManagement shop={shop} currency={shop.currency} role={role} soundEnabled={orderSoundEnabled} onToggleSound={toggleOrderSound} /></Suspense>
                 : activeSection === 'kitchen'
