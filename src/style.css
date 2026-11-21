@@ -1899,7 +1899,11 @@ table tbody td { border-color: var(--line); }
 .confirmation-number strong { color: var(--primary); }
 .confirmation-note { color: #486457; background: var(--mint); }
 .confirmation-note svg { flex: 0 0 auto; color: var(--success); }
-.order-confirmation-card .button { border-radius: 11px; color: #fff; background: var(--primary); }
+.order-confirmation-card .button { border-color: #174e38; border-radius: 11px; color: #fff; background: #174e38; box-shadow: 0 5px 14px #174e3830; }
+.order-confirmation-card .button:hover { border-color: #236b4b; color: #fff; background: #236b4b; }
+.order-confirmation-card .confirmation-sms-button { margin-bottom: 6px; border-color: #cfe0d4; color: #174e38; background: #e8f3ec; box-shadow: none; }
+.order-confirmation-card .confirmation-sms-button:hover { border-color: #b7d1bf; color: #174e38; background: #dceee2; }
+.confirmation-sms-note { display: block; margin: 0 0 12px; color: #7c887f; font-size: 8px; line-height: 1.5; }
 .confirmation-brand { color: var(--text-secondary); }
 .confirmation-brand svg { color: var(--accent-orange); }
 
@@ -2011,6 +2015,23 @@ table tbody td { border-color: var(--line); }
 .auth-developer-credit img { height: 42px; }
 .checkout-privacy { display: block; color: #7c887f; font-size: 9px; text-align: center; }
 .auth-privacy a { white-space: nowrap; }
+.visit-rewards-toggle { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid #dfe9d7; border-radius: 12px; background: #f7faef; cursor: pointer; }
+.visit-rewards-toggle > input { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; }
+.visit-rewards-check { width: 19px; height: 19px; display: grid; flex: 0 0 auto; place-items: center; margin-top: 1px; border: 1px solid #bccbb6; border-radius: 6px; color: transparent; background: #fff; }
+.visit-rewards-toggle > input:checked + .visit-rewards-check { border-color: #174e38; color: #fff; background: #174e38; }
+.visit-rewards-toggle > input:focus-visible + .visit-rewards-check { outline: 3px solid #174e3830; outline-offset: 2px; }
+.visit-rewards-toggle > span:last-child { display: flex; flex-direction: column; gap: 4px; }
+.visit-rewards-toggle strong { color: #174e38; font-size: 11px; }
+.visit-rewards-toggle small, .guest-order-note { color: #7c887f; font-size: 9px; line-height: 1.5; }
+.guest-order-note { margin: -7px 0 0; }
+.visit-rewards-status { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border: 1px solid #e6eadb; border-radius: 10px; color: #62736a; background: #fbfcf7; font-size: 10px; line-height: 1.5; }
+.visit-rewards-status strong { color: #174e38; font-size: 10px; }
+.visit-rewards-stars { display: flex; gap: 4px; margin-bottom: 3px; color: #d3dbd1; }
+.visit-rewards-stars .is-filled { color: #e9a23b; }
+.visit-rewards-earned { border-color: #f4d18c; color: #694d20; background: #fff7e2; }
+.visit-rewards-earned strong { color: #8a5717; }
+.visit-rewards-error { color: #a54f49; border-color: #f1d8d5; background: #fff6f5; }
+.visit-rewards-privacy { margin: -6px 0 0; color: #7c887f; font-size: 8px; line-height: 1.5; }
 
 @media (max-width: 700px) {
   .privacy-header { height: 58px; padding: 0 15px; }

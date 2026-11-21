@@ -5,7 +5,7 @@ import { m } from 'framer-motion'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, ArrowRight, Check, ChevronDown, CircleAlert, Clock3, Leaf, MapPin, Minus, Plus, Search, ShoppingBag, ShoppingBasket, Store, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, ChevronDown, CircleAlert, Clock3, Leaf, MapPin, MessageCircle, Minus, Plus, Search, ShoppingBag, ShoppingBasket, Star, Store, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '../lib/supabase'
 
@@ -119,6 +119,11 @@ function cartError(error: unknown) {
   return error instanceof Error ? error.message : 'Your order could not be placed. Please try again.'
 }
 
+function buildSmsHref(phone: string | null | undefined, message: string) {
+  const recipient = phone?.trim().replace(/[^\d+]/g, '')
+  return recipient ? `sms:${recipient}?body=${encodeURIComponent(message)}` : null
+}
+
 export function PublicMenu() {
   const { shopSlug = '' } = useParams()
   const [searchParams] = useSearchParams()
@@ -129,12 +134,27 @@ export function PublicMenu() {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [cartOpen, setCartOpen] = useState(false)
+  const [loyaltyEnabled, setLoyaltyEnabled] = useState(false)
+  const [sendOrderSms, setSendOrderSms] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const menuSectionRef = useRef<HTMLElement>(null)
   const navigate = useNavigate()
   const form = useForm<CheckoutValues>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: { customer_name: '', customer_phone: '', notes: '' },
+  })
+  const visitLookup = useMutation({
+    mutationFn: async (phone: string) => {
+      if (!supabase) throw new Error('Visit rewards are unavailable right now.')
+      const { data, error } = await supabase.rpc('get_customer_visit_count', {
+        menu_slug: shopSlug,
+        customer_phone: phone,
+      })
+      if (error) throw error
+      const count = typeof data === 'number' ? data : typeof data === 'string' && data.trim() ? Number(data) : NaN
+      if (!Number.isSafeInteger(count) || count < 0) throw new Error('Visit count lookup returned an invalid result.')
+      return count
+    },
   })
 
   const menuQuery = useQuery({
@@ -224,8 +244,8 @@ export function PublicMenu() {
       const { data, error } = await supabase.rpc('place_public_order', {
         menu_slug: shopSlug,
         requested_table_id: tableId,
-        customer_name: values.customer_name || null,
-        customer_phone: values.customer_phone || null,
+        customer_name: loyaltyEnabled ? values.customer_name.trim() || null : null,
+        customer_phone: loyaltyEnabled ? values.customer_phone.trim() || null : null,
         order_notes: values.notes || null,
         order_items: resolvedCart.map((entry) => ({
           product_id: entry.productId,
@@ -234,6 +254,7 @@ export function PublicMenu() {
           customizations: entry.customizations.map((optionId) => ({ option_id: optionId })),
         })),
       })
+
       if (error) throw error
       return data as { id: string; order_number: number; total: number; created_at: string }
     },
@@ -242,13 +263,60 @@ export function PublicMenu() {
       setCart([])
       setCheckoutOpen(false)
       setCartOpen(false)
+      const orderNumber = `#${order.order_number}`
+      const items = resolvedCart.map((entry) => `${entry.quantity} × ${entry.product.name}${entry.variant ? ` (${entry.variant.name})` : ''}`)
+      const smsHref = sendOrderSms
+        ? buildSmsHref(menu?.shop.phone, `Hello ${menu?.shop.name ?? 'shop'}, I placed order ${orderNumber}: ${items.join(', ')}. Total: ${money(order.total, menu?.shop.currency ?? 'INR')}.`)
+        : null
       navigate(`/menu/${encodeURIComponent(shopSlug)}/order/${order.id}${tableId ? `?table=${encodeURIComponent(tableId)}` : ''}`, {
         replace: true,
-        state: { orderNumber: order.order_number, total: order.total, currency: menu?.shop.currency },
+        state: {
+          orderNumber: order.order_number,
+          total: order.total,
+          currency: menu?.shop.currency,
+          smsHref,
+        },
       })
+      if (smsHref) window.location.href = smsHref
     },
     onError: (error) => toast.error(cartError(error)),
   })
+
+  function submitOrder(values: CheckoutValues) {
+    if (loyaltyEnabled) {
+      if (!values.customer_name.trim()) {
+        form.setError('customer_name', { type: 'required', message: 'Enter your name to track your visits.' })
+        return
+      }
+      const digits = values.customer_phone.replace(/\D/g, '')
+      if (digits.length < 7 || digits.length > 15) {
+        form.setError('customer_phone', { type: 'validate', message: 'Enter a valid phone number to track your visits.' })
+        return
+      }
+    }
+    placeOrder.mutate(values)
+  }
+
+  function updateLoyaltyPreference(enabled: boolean) {
+    setLoyaltyEnabled(enabled)
+    visitLookup.reset()
+    form.clearErrors(['customer_name', 'customer_phone'])
+    if (!enabled) {
+      form.setValue('customer_name', '')
+      form.setValue('customer_phone', '')
+    }
+  }
+
+  function checkVisits() {
+    if (!loyaltyEnabled) return
+    const phone = form.getValues('customer_phone').trim()
+    const digits = phone.replace(/\D/g, '')
+    if (digits.length < 7 || digits.length > 15) {
+      visitLookup.reset()
+      return
+    }
+    visitLookup.mutate(phone)
+  }
 
   if (menuQuery.isLoading) return <main className="public-loading"><div className="public-loading-inner"><div className="public-loading-brand"><span className="loading-mark"><Leaf size={22} /></span><span>Preparing something fresh…</span></div><div className="public-loading-hero" /><div className="public-loading-grid">{Array.from({ length: 4 }, (_, index) => <div className="public-loading-card" key={index}><div /><span /><span /></div>)}</div></div></main>
   if (menuQuery.isError || !menu) return (
@@ -331,9 +399,33 @@ export function PublicMenu() {
         <section className="checkout-modal" role="dialog" aria-modal="true" aria-labelledby="checkout-heading">
           <div className="checkout-head"><div><p className="eyebrow">ALMOST THERE</p><h2 id="checkout-heading">Confirm your order</h2></div><button className="icon-button" onClick={() => setCheckoutOpen(false)} aria-label="Close checkout"><X size={19} /></button></div>
           <div className="checkout-order-summary"><span>{cartCount} {cartCount === 1 ? 'item' : 'items'} · {tableId ? 'Table order' : 'Pickup order'}</span><strong>{money(estimatedTotal, menu.shop.currency)}</strong></div>
-          <form className="checkout-form" onSubmit={form.handleSubmit((values) => placeOrder.mutate(values))}>
-            <label className="form-field"><span>Your name <small>Optional</small></span><input autoComplete="name" placeholder="How should we address you?" maxLength={100} {...form.register('customer_name')} /></label>
-            <label className="form-field"><span>Phone number <small>Optional</small></span><input autoComplete="tel" type="tel" placeholder="For order updates" maxLength={30} {...form.register('customer_phone')} /></label>
+          <form className="checkout-form" onSubmit={form.handleSubmit(submitOrder)}>
+            <label className="visit-rewards-toggle">
+              <input type="checkbox" checked={loyaltyEnabled} onChange={(event) => updateLoyaltyPreference(event.target.checked)} />
+              <span className="visit-rewards-check"><Check size={14} /></span>
+              <span><strong>Track my visits &amp; earn a surprise</strong><small>Optional. Join with your name and phone number.</small></span>
+            </label>
+            {menu.shop.phone && <label className="visit-rewards-toggle order-sms-toggle">
+              <input type="checkbox" checked={sendOrderSms} onChange={(event) => setSendOrderSms(event.target.checked)} />
+              <span className="visit-rewards-check"><Check size={14} /></span>
+              <span><strong>Send order details to the shop by SMS</strong><small>Your SMS app opens after ordering. Review the message and tap Send.</small></span>
+            </label>}
+            {!loyaltyEnabled && <p className="guest-order-note">Prefer not to share your details? Continue as a guest—your name and phone number won’t be included with your order.</p>}
+            {loyaltyEnabled && <>
+              <label className="form-field"><span>Your name <small>Required for visit rewards</small></span><input autoComplete="name" placeholder="How should we address you?" maxLength={100} aria-invalid={Boolean(form.formState.errors.customer_name)} {...form.register('customer_name', { onChange: () => form.clearErrors('customer_name') })} />{form.formState.errors.customer_name && <small className="field-error">{form.formState.errors.customer_name.message}</small>}</label>
+              <label className="form-field"><span>Phone number <small>Required for visit rewards</small></span><input autoComplete="tel" type="tel" placeholder="Enter your phone number" maxLength={30} aria-invalid={Boolean(form.formState.errors.customer_phone)} {...form.register('customer_phone', { onChange: () => { visitLookup.reset(); form.clearErrors('customer_phone') }, onBlur: checkVisits })} />{form.formState.errors.customer_phone && <small className="field-error">{form.formState.errors.customer_phone.message}</small>}</label>
+              {visitLookup.isPending && <div className="visit-rewards-status">Checking your completed visits…</div>}
+              {visitLookup.isError && <div className="visit-rewards-status visit-rewards-error">We couldn’t check your visits right now. You can still place your order.</div>}
+              {visitLookup.isSuccess && <div className={`visit-rewards-status${visitLookup.data === 5 ? ' visit-rewards-earned' : ''}`}>
+                <div className="visit-rewards-stars" role="img" aria-label={`${Math.min(visitLookup.data, 5)} of 5 visits completed`}>
+                  {Array.from({ length: 5 }, (_, index) => <Star key={index} size={20} fill={index < visitLookup.data ? 'currentColor' : 'none'} className={index < visitLookup.data ? 'is-filled' : ''} />)}
+                </div>
+                {visitLookup.data < 5 && <><strong>{visitLookup.data} of 5 visits</strong><span>{5 - visitLookup.data} more {5 - visitLookup.data === 1 ? 'visit' : 'visits'} until your next-order surprise.</span></>}
+                {visitLookup.data === 5 && <><strong>You’ve earned a surprise from us!</strong><span>This is your 6th visit. Show this message to the shop team with your order.</span></>}
+                {visitLookup.data > 5 && <><strong>{visitLookup.data} completed visits</strong><span>Thanks for being a regular! Ask the shop team about your surprise.</span></>}
+              </div>}
+              <p className="visit-rewards-privacy">Visit counts use completed orders at this shop. Phone numbers aren’t verified; only the visit count is shown.</p>
+            </>}
             <label className="form-field"><span>Anything we should know? <small>Optional</small></span><textarea rows={3} placeholder="Allergies or special instructions" maxLength={500} {...form.register('notes')} /></label>
             {tableId && <div className="checkout-notice"><Clock3 size={15} /><span>Your order will be sent to the team at your table. Please pay your bill with the staff.</span></div>}
             <div className="checkout-total"><span>Total due at checkout</span><strong>{money(estimatedTotal, menu.shop.currency)}</strong></div>
@@ -401,7 +493,9 @@ export function PublicOrderConfirmation() {
   const [searchParams] = useSearchParams()
   const tableId = searchParams.get('table')
   const location = useLocation()
-  const state = location.state as { orderNumber?: number; total?: number; currency?: string } | null
+  const state = location.state as { orderNumber?: number; total?: number; currency?: string; smsHref?: string | null } | null
+  const orderNumber = state?.orderNumber ? `#${state.orderNumber}` : `#${orderId.slice(0, 8).toUpperCase()}`
+  const smsHref = state?.smsHref
   return (
     <m.main className="order-confirmation-page" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }}>
       <div className="order-confirmation-card">
@@ -409,9 +503,10 @@ export function PublicOrderConfirmation() {
         <p className="eyebrow">ORDER RECEIVED</p>
         <h1>Something fresh is on its way.</h1>
         <p className="confirmation-copy">The team has your order and will get started shortly.</p>
-        <div className="confirmation-number"><span>ORDER NUMBER</span><strong>{state?.orderNumber ? `#${state.orderNumber}` : `#${orderId.slice(0, 8).toUpperCase()}`}</strong></div>
+        <div className="confirmation-number"><span>ORDER NUMBER</span><strong>{orderNumber}</strong></div>
         {state?.total != null && <div className="confirmation-total"><span>Order total</span><strong>{money(Number(state.total), state.currency ?? 'INR')}</strong></div>}
         <div className="confirmation-note"><Clock3 size={17} /><span>{tableId ? 'We’ll bring it right to your table. Please settle your bill with a staff member.' : 'Your order is with the shop. Show this number when you collect it.'}</span></div>
+        {smsHref && <><a className="button button-secondary button-wide confirmation-sms-button" href={smsHref}><MessageCircle size={16} /> SMS app didn’t open? Tap to open</a><small className="confirmation-sms-note">You’ll need to tap Send in your SMS app.</small></>}
         <Link className="button button-primary button-wide" to={`/menu/${encodeURIComponent(shopSlug)}${tableId ? `?table=${encodeURIComponent(tableId)}` : ''}`}><ArrowLeft size={16} /> Back to the menu</Link>
         <small className="confirmation-private"><CircleAlert size={13} /> Keep your order number handy for reference.</small>
       </div>

@@ -6,14 +6,14 @@ const policySections = [
     title: 'Information we handle',
     paragraphs: [
       'When a shop creates an account, PressPilot processes account details such as the email address and profile name associated with that account. Shop owners and staff may also add business details, team roles, menu items, prices, product photos, a shop logo, and a promotional cover image.',
-      'When you place an order from a public menu, the shop receives the order items and customizations, table selection when applicable, order total, and any name, phone number, or note you choose to provide. Name and phone are optional in the ordering form. Please do not include sensitive personal information in order notes.',
+      'When you place an order from a public menu, the shop receives the order items and customizations, table selection when applicable, order total, and any name, phone number, or note you choose to provide. Name and phone are optional: you can place an order as a guest without sharing them, or choose to provide them to check visit rewards. Please do not include sensitive personal information in order notes.',
       'The ordering page saves your cart in your browser, associated with that shop and table selection, so it remains available while you browse. The cart is removed after a successful order; you can also clear it by clearing this site’s browser storage.',
     ],
   },
   {
     title: 'How information is used',
     paragraphs: [
-      'We use this information to authenticate shop accounts, provide shop and menu management, send customer orders to the correct shop, support table-based ordering, display order status to shop staff, and maintain the security and operation of the service.',
+      'We use this information to authenticate shop accounts, provide shop and menu management, send customer orders to the correct shop, support table-based ordering, display order status to shop staff, and maintain the security and operation of the service. If you opt into visit rewards, your phone number is used to count completed orders at that shop; the lookup returns only the count and does not verify that you own the number.',
       'Payment details are not requested in the public ordering form. Shops may record billing and payment status in their workspace; payment is arranged directly with the shop.',
     ],
   },
@@ -59,7 +59,7 @@ export function PrivacyPolicyPage() {
           <p className="eyebrow">YOUR PRIVACY</p>
           <h1>Privacy policy</h1>
           <p className="privacy-lede">How PressPilot handles shop account details, customer orders, and menu information.</p>
-          <span className="privacy-updated">Last updated November 19, 2026</span>
+          <span className="privacy-updated">Last updated November 21, 2026</span>
         </div>
         <div className="privacy-sections">
           {policySections.map((section, index) => (

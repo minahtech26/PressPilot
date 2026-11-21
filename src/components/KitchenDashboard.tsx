@@ -1,12 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Check, Clock3, Flame, Volume2, VolumeX } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Shop } from '../lib/types'
 import { supabase } from '../lib/supabase'
 import { firstRelation, orderSelect, type OrderStatus, type ShopOrder } from '../lib/orders'
-import { useLiveOrders } from '../lib/useLiveOrders'
-import { playOrderTone } from '../lib/orderSound'
 
 const kitchenStatuses: OrderStatus[] = ['new', 'accepted', 'preparing', 'ready']
 
@@ -21,10 +19,8 @@ function minutesSince(timestamp: string) {
   return minutes === 0 ? 'Just now' : `${minutes} min`
 }
 
-export function KitchenDashboard({ shop }: { shop: Shop }) {
+export function KitchenDashboard({ shop, soundEnabled, onToggleSound }: { shop: Shop; soundEnabled: boolean; onToggleSound: () => void }) {
   const queryClient = useQueryClient()
-  const [soundEnabled, setSoundEnabled] = useState(false)
-  useLiveOrders(shop.id, soundEnabled)
 
   const ordersQuery = useQuery({
     queryKey: ['orders', shop.id],
@@ -76,10 +72,7 @@ export function KitchenDashboard({ shop }: { shop: Shop }) {
         </div>
         <div className="live-order-tools">
           <span className="realtime-pill"><span className="live-dot" /> Live updates</span>
-          <button className={`button ${soundEnabled ? 'button-primary' : 'button-secondary'}`} onClick={() => {
-            if (!soundEnabled) playOrderTone()
-            setSoundEnabled((enabled) => !enabled)
-          }}>{soundEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}{soundEnabled ? 'Sound on' : 'Enable sound'}</button>
+          <button className={`button ${soundEnabled ? 'button-primary' : 'button-secondary'}`} onClick={onToggleSound}>{soundEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}{soundEnabled ? 'Sound on' : 'Enable sound'}</button>
         </div>
       </div>
       <div className="kitchen-summary">

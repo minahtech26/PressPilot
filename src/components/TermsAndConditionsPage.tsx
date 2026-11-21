@@ -15,6 +15,7 @@ const termsSections = [
       'You may browse a shop’s public menu without creating a PressPilot account. When placing an order, provide accurate information if you choose to enter a name, phone number, or note. Order notes should be limited to relevant instructions and should not include sensitive personal information.',
       'Submitting an order sends the selected items, options, and any information you provided to that shop. The shop must confirm and fulfill the order. Contact the shop directly about changes, cancellations, availability, preparation, allergens, or refunds; the customer ordering page does not provide an order-cancellation function.',
       'Prices and taxes shown before submission may be estimates. The shop confirms the applicable total and any payment due. Public ordering through PressPilot does not itself collect card payment; table orders direct customers to settle the bill with shop staff.',
+      'A shop may offer optional visit rewards. Visit counts are based on completed orders associated with the phone number you provide and are not phone-verified. Ask the shop team about reward availability and redemption.',
     ],
   },
   {
@@ -66,7 +67,7 @@ export function TermsAndConditionsPage() {
           <p className="eyebrow">USING PRESSPILOT</p>
           <h1>Terms and conditions</h1>
           <p className="privacy-lede">Terms for shop teams using PressPilot and customers ordering from a shop’s public menu.</p>
-          <span className="privacy-updated">Last updated November 19, 2026</span>
+          <span className="privacy-updated">Last updated November 21, 2026</span>
         </div>
         <div className="privacy-sections">
           {termsSections.map((section, index) => (

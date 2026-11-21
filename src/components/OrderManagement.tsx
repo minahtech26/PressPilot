@@ -5,8 +5,6 @@ import { toast } from 'sonner'
 import type { Shop, ShopRole } from '../lib/types'
 import { supabase } from '../lib/supabase'
 import { firstRelation, orderSelect, orderStatusLabels, type OrderStatus, type ShopOrder } from '../lib/orders'
-import { useLiveOrders } from '../lib/useLiveOrders'
-import { playOrderTone } from '../lib/orderSound'
 
 const filters: Array<{ value: OrderStatus | 'all'; label: string }> = [
   { value: 'all', label: 'All orders' },
@@ -56,16 +54,14 @@ function actionLabel(status: OrderStatus) {
   return labels[status] ?? ''
 }
 
-export function OrderManagement({ shop, currency, role }: { shop: Shop; currency: string; role: ShopRole }) {
+export function OrderManagement({ shop, currency, role, soundEnabled, onToggleSound }: { shop: Shop; currency: string; role: ShopRole; soundEnabled: boolean; onToggleSound: () => void }) {
   const queryClient = useQueryClient()
   const [filter, setFilter] = useState<OrderStatus | 'all'>('all')
   const [search, setSearch] = useState('')
   const [selectedOrder, setSelectedOrder] = useState<ShopOrder | null>(null)
   const [cancelOrder, setCancelOrder] = useState<ShopOrder | null>(null)
   const [cancelReason, setCancelReason] = useState('')
-  const [soundEnabled, setSoundEnabled] = useState(false)
   const canCancelOrders = role !== 'kitchen'
-  useLiveOrders(shop.id, soundEnabled)
 
   const ordersQuery = useQuery({
     queryKey: ['orders', shop.id],
@@ -138,10 +134,7 @@ export function OrderManagement({ shop, currency, role }: { shop: Shop; currency
         </div>
         <div className="live-order-tools">
           <span className="realtime-pill"><span className="live-dot" /> Live updates</span>
-          <button className={`button ${soundEnabled ? 'button-primary' : 'button-secondary'}`} onClick={() => {
-            if (!soundEnabled) playOrderTone()
-            setSoundEnabled((enabled) => !enabled)
-          }}><span className="sound-icon">{soundEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}</span>{soundEnabled ? 'Sound on' : 'Enable sound'}</button>
+          <button className={`button ${soundEnabled ? 'button-primary' : 'button-secondary'}`} onClick={onToggleSound}><span className="sound-icon">{soundEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}</span>{soundEnabled ? 'Sound on' : 'Enable sound'}</button>
         </div>
       </div>
       <div className="order-summary-strip">

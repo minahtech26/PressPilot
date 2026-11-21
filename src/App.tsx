@@ -35,12 +35,16 @@ import {
   Table2,
   Upload,
   Users,
+  Volume2,
+  VolumeX,
   X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { BrandMark } from './components/BrandMark'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import type { Shop, ShopRole } from './lib/types'
+import { playOrderTone } from './lib/orderSound'
+import { useLiveOrders } from './lib/useLiveOrders'
 import { useLiveNotifications } from './lib/useLiveNotifications'
 
 const MenuManagement = lazy(() => import('./components/MenuManagement').then((module) => ({ default: module.MenuManagement })))
@@ -365,6 +369,7 @@ function Dashboard({ user, shop, role, isSuperAdmin }: { user: User; shop: Shop;
   const navigate = useNavigate()
   const location = useLocation()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [orderSoundEnabled, setOrderSoundEnabled] = useState(true)
   const [editing, setEditing] = useState(false)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [coverFile, setCoverFile] = useState<File | null>(null)
@@ -388,6 +393,7 @@ function Dashboard({ user, shop, role, isSuperAdmin }: { user: User; shop: Shop;
     },
     enabled: Boolean(supabase),
   })
+  useLiveOrders(shop.id, orderSoundEnabled)
   useLiveNotifications(shop.id)
   const sectionTitles: Record<string, string> = {
     overview: 'Overview',
@@ -412,6 +418,10 @@ function Dashboard({ user, shop, role, isSuperAdmin }: { user: User; shop: Shop;
     setRemoveLogo(false)
     setRemoveCover(false)
     setEditing(false)
+  }
+  function toggleOrderSound() {
+    if (!orderSoundEnabled) playOrderTone()
+    setOrderSoundEnabled((enabled) => !enabled)
   }
   const saveShop = useMutation({
     mutationFn: async (values: ShopValues) => {
@@ -499,7 +509,7 @@ function Dashboard({ user, shop, role, isSuperAdmin }: { user: User; shop: Shop;
         </div>
       </aside>
       <m.main key={activeSection} className="dashboard-main" initial={{ opacity: 0, y: 7 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
-        <header className="topbar"><div className="topbar-left"><button className="icon-button mobile-menu" onClick={() => setMobileNavOpen(true)} aria-label="Open menu"><Menu size={20} /></button><div className="breadcrumb"><span>Workspace</span><span className="crumb-slash">/</span><strong>{sectionTitles[activeSection] ?? 'Overview'}</strong></div></div><div className="topbar-actions"><div className="status-chip"><span className="live-dot" /> All systems operational</div><button className={`top-icon ${activeSection === 'notifications' ? 'top-icon-active' : ''}`} onClick={() => navigate('/dashboard/notifications')} aria-label={`Notifications${(unreadNotifications.data ?? 0) > 0 ? `, ${unreadNotifications.data} unread` : ''}`}><Bell size={18} />{(unreadNotifications.data ?? 0) > 0 && <i />}</button><div className="user-avatar user-avatar-small">{initials}</div></div></header>
+        <header className="topbar"><div className="topbar-left"><button className="icon-button mobile-menu" onClick={() => setMobileNavOpen(true)} aria-label="Open menu"><Menu size={20} /></button><div className="breadcrumb"><span>Workspace</span><span className="crumb-slash">/</span><strong>{sectionTitles[activeSection] ?? 'Overview'}</strong></div></div><div className="topbar-actions"><div className="status-chip"><span className="live-dot" /> All systems operational</div><button className={`top-icon ${orderSoundEnabled ? 'top-icon-active' : ''}`} onClick={toggleOrderSound} aria-label={`Order alert sound ${orderSoundEnabled ? 'on' : 'off'}`} title={`Order alert sound ${orderSoundEnabled ? 'on' : 'off'}`}>{orderSoundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}</button><button className={`top-icon ${activeSection === 'notifications' ? 'top-icon-active' : ''}`} onClick={() => navigate('/dashboard/notifications')} aria-label={`Notifications${(unreadNotifications.data ?? 0) > 0 ? `, ${unreadNotifications.data} unread` : ''}`}><Bell size={18} />{(unreadNotifications.data ?? 0) > 0 && <i />}</button><div className="user-avatar user-avatar-small">{initials}</div></div></header>
         {activeSection === 'settings'
           ? <section className="page-content settings-content"><PageHeading eyebrow="YOUR BUSINESS" title="Shop settings" description="Keep your shop details up to date. These details appear on receipts and your digital menu." /><div className="settings-card"><div className="settings-card-head"><div className="settings-icon"><Store size={18} /></div><div><h3>Business details</h3><p>Your shop identity and contact information</p></div>{canManageShop && <button className="button button-secondary button-small" onClick={() => editing ? cancelShopEdit() : setEditing(true)}>{editing ? 'Cancel' : 'Edit details'}</button>}</div><form className="settings-form" onSubmit={shopForm.handleSubmit((values) => saveShop.mutate(values))}><div className="form-grid"><FormField label="Shop name" error={shopForm.formState.errors.name?.message}><input readOnly={!editing} {...shopForm.register('name')} /></FormField><FormField label="Shop email" error={shopForm.formState.errors.email?.message}><input readOnly={!editing} {...shopForm.register('email')} /></FormField><FormField label="Phone number" error={shopForm.formState.errors.phone?.message}><input readOnly={!editing} {...shopForm.register('phone')} /></FormField><FormField label="Currency"><input readOnly value={`${shop.currency} · Indian Rupee`} /></FormField></div><FormField label="Business address" error={shopForm.formState.errors.address?.message}><input readOnly={!editing} {...shopForm.register('address')} /></FormField><div className="settings-divider" /><div className="settings-branding-head"><div><strong>Menu branding</strong><span>Display your logo and a promotional banner on your customer menu.</span></div></div><div className="settings-branding-grid"><div className="settings-branding-item"><div className="settings-branding-preview settings-branding-logo">{logoFile ? <ImagePlus size={23} /> : shop.logo_url && !removeLogo ? <img src={shop.logo_url} alt={`${shop.name} logo`} /> : <ImagePlus size={23} />}</div><div className="settings-branding-copy"><strong>Shop logo</strong><span>Shown beside your shop name and in the hero badge.</span>{editing && <><label className="file-control"><Upload size={14} /><span>{logoFile?.name ?? (shop.logo_url && !removeLogo ? 'Replace current logo' : 'Choose a logo')}</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { const file = event.target.files?.[0] ?? null; if (file && (file.size > 5 * 1024 * 1024 || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type))) { toast.error('Choose a JPG, PNG or WebP image under 5 MB.'); event.target.value = ''; return } setLogoFile(file); setRemoveLogo(false) }} /></label>{shop.logo_url && <button type="button" className="settings-image-remove" onClick={() => { setLogoFile(null); setRemoveLogo((value) => !value) }}>{removeLogo ? 'Keep current logo' : 'Remove logo'}</button>}</>}</div></div><div className="settings-branding-item"><div className="settings-branding-preview settings-branding-cover">{coverFile ? <ImagePlus size={23} /> : shop.cover_url && !removeCover ? <img src={shop.cover_url} alt={`${shop.name} menu banner`} /> : <ImagePlus size={23} />}</div><div className="settings-branding-copy"><strong>Menu banner / advertisement</strong><span>Wide image displayed behind the shop introduction.</span>{editing && <><label className="file-control"><Upload size={14} /><span>{coverFile?.name ?? (shop.cover_url && !removeCover ? 'Replace current banner' : 'Choose a banner')}</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { const file = event.target.files?.[0] ?? null; if (file && (file.size > 5 * 1024 * 1024 || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type))) { toast.error('Choose a JPG, PNG or WebP image under 5 MB.'); event.target.value = ''; return } setCoverFile(file); setRemoveCover(false) }} /></label>{shop.cover_url && <button type="button" className="settings-image-remove" onClick={() => { setCoverFile(null); setRemoveCover((value) => !value) }}>{removeCover ? 'Keep current banner' : 'Remove banner'}</button>}</>}</div></div></div><p className="settings-branding-hint">Images must be JPG, PNG or WebP and 5 MB or smaller. Changes appear on the public menu after saving.</p><div className="settings-divider" /><div className="settings-meta"><div><span>Public menu URL</span><strong>{window.location.origin}/menu/{shop.slug}</strong></div><div><span>Workspace created</span><strong>{new Date(shop.created_at).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</strong></div></div>{editing && <div className="settings-actions"><button type="button" className="button button-secondary" onClick={cancelShopEdit}>Cancel</button><button type="submit" className="button button-primary" disabled={saveShop.isPending}>{saveShop.isPending ? 'Saving…' : 'Save changes'} <Check size={16} /></button></div>}</form></div></section>
           : activeSection === 'menu'
@@ -507,9 +517,9 @@ function Dashboard({ user, shop, role, isSuperAdmin }: { user: User; shop: Shop;
             : activeSection === 'tables'
               ? <Suspense fallback={<LoadingPage />}><TableManagement shop={shop} /></Suspense>
               : activeSection === 'orders'
-                ? <Suspense fallback={<LoadingPage />}><OrderManagement shop={shop} currency={shop.currency} role={role} /></Suspense>
+                ? <Suspense fallback={<LoadingPage />}><OrderManagement shop={shop} currency={shop.currency} role={role} soundEnabled={orderSoundEnabled} onToggleSound={toggleOrderSound} /></Suspense>
                 : activeSection === 'kitchen'
-                  ? <Suspense fallback={<LoadingPage />}><KitchenDashboard shop={shop} /></Suspense>
+                  ? <Suspense fallback={<LoadingPage />}><KitchenDashboard shop={shop} soundEnabled={orderSoundEnabled} onToggleSound={toggleOrderSound} /></Suspense>
                   : activeSection === 'notifications'
                     ? <Suspense fallback={<LoadingPage />}><NotificationsPage shop={shop} /></Suspense>
                       : activeSection === 'billing'
